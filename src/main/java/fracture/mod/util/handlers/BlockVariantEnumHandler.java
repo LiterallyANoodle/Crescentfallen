@@ -2,8 +2,8 @@ package fracture.mod.util.handlers;
 
 import net.minecraft.util.IStringSerializable;
 
-public class EnumHandler {
-	public static enum EnumType implements IStringSerializable {
+public class BlockVariantEnumHandler {	
+	public static enum BlockVariantEnum implements IStringSerializable {
 		// METALS
 		copper(0, "copper"),
 		TIN(1, "tin");
@@ -26,16 +26,16 @@ public class EnumHandler {
 		// ALUMINUM(14, "aluminum"),
 		// CENT(13, "centurium");
 
-		private static final EnumType[] META_LOOKUP = new EnumType[values().length];
-		private final int meta;
+		private static final BlockVariantEnum[] META_LOOKUP = new BlockVariantEnum[values().length];
+		private final int variantId;
 		private final String name, unlocalizedName;
 
-		private EnumType(int meta, String name) {
-			this(meta, name, name);
+		private BlockVariantEnum(int variantId, String name) {
+			this(variantId, name, name);
 		}
 
-		private EnumType(int meta, String name, String unlocalizedName) {
-			this.meta = meta;
+		private BlockVariantEnum(int meta, String name, String unlocalizedName) {
+			this.variantId = meta;
 			this.name = name;
 			this.unlocalizedName = unlocalizedName;
 
@@ -50,7 +50,7 @@ public class EnumHandler {
 		}
 
 		public int getMeta() {
-			return this.meta;
+			return this.variantId;
 		}
 
 		public String getUnlocalizedName() {
@@ -62,12 +62,12 @@ public class EnumHandler {
 			return this.name();
 		}
 
-		public static EnumType byMetadata(int meta) {
-			return META_LOOKUP[meta];
+		public static BlockVariantEnum byMetadata(int variantId) {
+			return META_LOOKUP[variantId];
 		}
 
 		static {
-			for (EnumType enumtype : values()) {
+			for (BlockVariantEnum enumtype : values()) {
 				META_LOOKUP[enumtype.getMeta()] = enumtype;
 			}
 		}

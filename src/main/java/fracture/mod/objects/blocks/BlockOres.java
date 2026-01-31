@@ -5,7 +5,7 @@ import fracture.mod.init.BlockInit;
 import fracture.mod.init.ItemInit;
 import fracture.mod.objects.blocks.item.ItemBlockVariants;
 import fracture.mod.util.IHasModel;
-import fracture.mod.util.handlers.EnumHandler;
+import fracture.mod.util.handlers.BlockVariantEnumHandler;
 import fracture.mod.util.interfaces.IMetaName;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -23,8 +23,8 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 
 public class BlockOres extends Block implements IHasModel, IMetaName {
-	public static final PropertyEnum<EnumHandler.EnumType> VARIANT = PropertyEnum.<EnumHandler.EnumType>create(
-			"varient", EnumHandler.EnumType.class);
+	public static final PropertyEnum<BlockVariantEnumHandler.BlockVariantEnum> VARIANT = PropertyEnum.<BlockVariantEnumHandler.BlockVariantEnum>create(
+			"varient", BlockVariantEnumHandler.BlockVariantEnum.class);
 
 	private String name, dimension;
 
@@ -33,7 +33,7 @@ public class BlockOres extends Block implements IHasModel, IMetaName {
 		setTranslationKey(name);
 		setRegistryName(name);
 		setCreativeTab(fracture.mod.CFMain.CrescentfallenBlocks);
-		setDefaultState(this.blockState.getBaseState().withProperty(VARIANT, EnumHandler.EnumType.copper));
+		setDefaultState(this.blockState.getBaseState().withProperty(VARIANT, BlockVariantEnumHandler.BlockVariantEnum.copper));
 
 		this.name = name;
 		this.dimension = dimension;
@@ -44,17 +44,17 @@ public class BlockOres extends Block implements IHasModel, IMetaName {
 
 	@Override
 	public int damageDropped(IBlockState state) {
-		return ((EnumHandler.EnumType) state.getValue(VARIANT)).getMeta();
+		return ((BlockVariantEnumHandler.BlockVariantEnum) state.getValue(VARIANT)).getMeta();
 	}
 
 	@Override
 	public int getMetaFromState(IBlockState state) {
-		return ((EnumHandler.EnumType) state.getValue(VARIANT)).getMeta();
+		return ((BlockVariantEnumHandler.BlockVariantEnum) state.getValue(VARIANT)).getMeta();
 	}
 
 	@Override
-	public IBlockState getStateFromMeta(int meta) {
-		return this.getDefaultState().withProperty(VARIANT, EnumHandler.EnumType.byMetadata(meta));
+	public IBlockState getStateFromMeta(int variantId) {
+		return this.getDefaultState().withProperty(VARIANT, BlockVariantEnumHandler.BlockVariantEnum.byMetadata(variantId));
 	}
 
 	@Override
@@ -66,7 +66,7 @@ public class BlockOres extends Block implements IHasModel, IMetaName {
 
 	@Override
 	public void getSubBlocks(CreativeTabs itemIn, NonNullList<ItemStack> items) {
-		for (EnumHandler.EnumType variant : EnumHandler.EnumType.values()) {
+		for (BlockVariantEnumHandler.BlockVariantEnum variant : BlockVariantEnumHandler.BlockVariantEnum.values()) {
 			items.add(new ItemStack(this, 1, variant.getMeta()));
 		}
 	}
@@ -77,14 +77,14 @@ public class BlockOres extends Block implements IHasModel, IMetaName {
 	}
 
 	public String getSpecialName(ItemStack stack) {
-		return EnumHandler.EnumType.values()[stack.getItemDamage()].getName();
+		return BlockVariantEnumHandler.BlockVariantEnum.values()[stack.getItemDamage()].getName();
 	}
 
 	@Override
 	public void registerModels() {
-		for (int i = 0; i < EnumHandler.EnumType.values().length; i++) {
+		for (int i = 0; i < BlockVariantEnumHandler.BlockVariantEnum.values().length; i++) {
 			CFMain.proxy.registerVariantRenderer(Item.getItemFromBlock(this), i,
-					"ore_" + this.dimension + "_" + EnumHandler.EnumType.values()[i].getName(), "inventory");
+					"ore_" + this.dimension + "_" + BlockVariantEnumHandler.BlockVariantEnum.values()[i].getName(), "inventory");
 		}
 	//Everything inside of the for loop is ran for the number of different variants that are present.
 		
