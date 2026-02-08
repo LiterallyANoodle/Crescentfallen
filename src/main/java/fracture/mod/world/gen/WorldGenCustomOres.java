@@ -2,7 +2,7 @@ package fracture.mod.world.gen;
 
 import fracture.mod.init.BlockInit;
 import fracture.mod.objects.blocks.BlockOres;
-import fracture.mod.util.handlers.BlockVariantEnumHandler;
+import fracture.mod.util.handlers.BlockVariant;
 import net.minecraft.block.state.pattern.BlockMatcher;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.gen.feature.WorldGenerator;

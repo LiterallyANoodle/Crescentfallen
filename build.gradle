@@ -9,6 +9,9 @@ buildscript {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
     }
 }
+plugins {
+	id 'java'
+}
 apply plugin: 'net.minecraftforge.gradle.forge'
 //apply plugin: 'net.galacticraft.addon'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
@@ -103,6 +106,9 @@ dependencies {
     // for more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+    
+    annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
+    compileOnly 'com.google.auto.service:auto-service:1.1.1'
 
 }
 

@@ -3,6 +3,7 @@ package fracture.mod.init;
 import java.util.ArrayList;
 import java.util.List;
 import fracture.mod.util.IHasModel;
+import fracture.mod.generator.ItemRegistrarTarget;
 import fracture.mod.objects.blocks.BlockBase;
 import fracture.mod.objects.blocks.BlockOres;
 //import fracture.mod.objects.blocks.BlockOres;
@@ -10,8 +11,8 @@ import fracture.mod.objects.blocks.BlockOres;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 
-public class BlockInit 
-{
+@ItemRegistrarTarget
+public class BlockInit {
 	public static final List<Block> BLOCKS = new ArrayList<Block>();
 	
 	//--------------------------------MATERIAL

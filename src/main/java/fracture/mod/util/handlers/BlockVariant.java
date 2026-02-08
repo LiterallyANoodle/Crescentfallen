@@ -1,8 +1,12 @@
 package fracture.mod.util.handlers;
 
+import fracture.mod.generator.ItemRegistrarTarget;
 import net.minecraft.util.IStringSerializable;
 
-public class BlockVariantEnumHandler {	
+
+@ItemRegistrarTarget
+public class BlockVariant {
+	
 	public static enum BlockVariantEnum implements IStringSerializable {
 		// METALS
 		copper(0, "copper"),
