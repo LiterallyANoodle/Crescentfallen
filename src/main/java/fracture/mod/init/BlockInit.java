@@ -17,7 +17,7 @@ public class BlockInit {
 	
 	//--------------------------------MATERIAL
 	
-	public static final Block BLOCK_CENTURIUM = new Blockofcent("block_centurium", Material.IRON);
+	public static final Block BLOCK_CENTURIUM = new BlockOfCenturium("block_centurium", Material.IRON);
 	public static final Block BLOCK_TERRAMINIUM = new Blockofmetal("block_terraminium", Material.IRON);
 	public static final Block BLOCK_SERITONIUM = new Blockofmetal("block_seritonium", Material.IRON);
 

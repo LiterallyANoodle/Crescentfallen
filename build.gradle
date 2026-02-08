@@ -2,17 +2,18 @@ buildscript {
     repositories {
         jcenter()
         maven { url = "https://files.minecraftforge.net/maven" }
+        maven { url = "https://plugins.gradle.org/m2/" }
         
 
     }
     dependencies {
+        classpath 'net.ltgt.gradle:gradle-apt-plugin:0.18'
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
     }
 }
-plugins {
-	id 'java'
-}
 apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'net.ltgt.apt'
+apply plugin: 'java'
 //apply plugin: 'net.galacticraft.addon'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
@@ -107,8 +108,9 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
     
-    annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
+    apt 'com.google.auto.service:auto-service:1.1.1'
     compileOnly 'com.google.auto.service:auto-service:1.1.1'
+    implementation 'com.squareup:javapoet:1.13.0'
 
 }
 
