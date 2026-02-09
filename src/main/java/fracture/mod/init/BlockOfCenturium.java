@@ -9,10 +9,10 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 
-public class Blockofcent extends Block implements IHasModel 
+public class BlockOfCenturium extends Block implements IHasModel 
 {
 	
-	public Blockofcent(String name, Material material) 
+	public BlockOfCenturium(String name, Material material) 
 	{
 
 		super(material);

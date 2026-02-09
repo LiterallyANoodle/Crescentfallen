@@ -133,6 +133,13 @@ public class CFConfig {
 		//public int staticIdSpaceStation = -4451;
 
 	}
+	
+	public static class BlockRegistrarSettings {
+		
+		@Config.Name(value = "Block JSON Data File Path")
+		public String blockDataPath;
+		
+	}
 
 	public static class Misc {
 
