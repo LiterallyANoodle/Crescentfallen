@@ -111,9 +111,9 @@ public class CFMain {
 	    //System.out.println("[Fracture] PRE-INIT STARTED");
 	    
 	    // Register the Generator here (Safer than init)
-	    MinecraftForge.EVENT_BUS.register(new CfIoChunkgen());	    
-	    MinecraftForge.EVENT_BUS.register(new CfEuropaChunkgen());
-	    MinecraftForge.EVENT_BUS.register(new CfOberonChunkgen());
+	    MinecraftForge.EVENT_BUS.register(CfIoChunkgen.getInstance());	    
+	    MinecraftForge.EVENT_BUS.register(CfEuropaChunkgen.getInstance());
+//	    MinecraftForge.EVENT_BUS.register(new CfOberonChunkgen());
 	    //GameRegistry.registerWorldGenerator(new WorldGenEuropaIce(), 2000); // Higher weight runs later
 	    //System.out.println("[Fracture] Generator Registered successfully!");
 	    //System.out.println("--------------------------------------------------");

@@ -8,12 +8,14 @@ import javax.lang.model.element.Modifier;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.squareup.javapoet.FieldSpec;
 
-import fracture.mod.generator.GeneratorTarget;
+import fracture.mod.annotation.GeneratorTarget;
+import fracture.mod.annotation.Literal;
+import fracture.mod.annotation.Template;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 
-@GeneratorTarget
-public class BlockInit {
+@GeneratorTarget(packageLocation="fracture.mod.init", generatedClassName="BlockInit")
+public class BlockInitTemplate {
 	
 	@Literal
 	public static final List<Block> BLOCKS = new ArrayList<Block>();
