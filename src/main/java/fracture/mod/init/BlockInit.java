@@ -3,6 +3,7 @@ package fracture.mod.init;
 import java.util.ArrayList;
 import java.util.List;
 import fracture.mod.util.IHasModel;
+import fracture.mod.generator.GeneratorTarget;
 import fracture.mod.objects.blocks.BlockBase;
 import fracture.mod.objects.blocks.BlockOres;
 //import fracture.mod.objects.blocks.BlockOres;
@@ -10,13 +11,13 @@ import fracture.mod.objects.blocks.BlockOres;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 
-public class BlockInit 
-{
+@GeneratorTarget
+public class BlockInit {
 	public static final List<Block> BLOCKS = new ArrayList<Block>();
 	
 	//--------------------------------MATERIAL
 	
-	public static final Block BLOCK_CENTURIUM = new Blockofcent("block_centurium", Material.IRON);
+	public static final Block BLOCK_CENTURIUM = new BlockOfCenturium("block_centurium", Material.IRON);
 	public static final Block BLOCK_TERRAMINIUM = new Blockofmetal("block_terraminium", Material.IRON);
 	public static final Block BLOCK_SERITONIUM = new Blockofmetal("block_seritonium", Material.IRON);
 

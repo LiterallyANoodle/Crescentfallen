@@ -1,0 +1,20 @@
+{
+	"blockTypeParameters": [
+		"generic",
+		"ore",
+		"variant"
+	],
+	"generic": {
+		"id": "0",
+		"name": "copper",
+		"defaultLang": "en"
+	},
+	"ore": {
+		"maxHeight": "100",
+		"minHeight": "0"
+	},
+	"variant": {
+		"variantId": 0,
+		"variantName": "copper"
+	}
+}
