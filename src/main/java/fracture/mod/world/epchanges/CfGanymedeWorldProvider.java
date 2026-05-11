@@ -9,7 +9,6 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeProviderSingle;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-// Import your new sky
 public class CfGanymedeWorldProvider extends WorldProvider {
 
     @Override
@@ -29,9 +28,9 @@ public class CfGanymedeWorldProvider extends WorldProvider {
             }
         }
 
-        // 3. Fallback
+        // Fallback
         if (targetBiome == null) {
-            System.out.println("[Fracture] CRITICAL: Biome not found. Resulting to fallback.");
+            System.out.println("[Fracture] ERROR: Biome not found. Resulting to fallback.");
             targetBiome = Biomes.DESERT;
         }
 

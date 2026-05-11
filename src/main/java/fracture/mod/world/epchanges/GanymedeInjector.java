@@ -1,7 +1,6 @@
-package fracture.mod.util.handlers;
+package fracture.mod.world.epchanges;
 
 import fracture.mod.client.sky.GanymedeSkyProvider;
-import fracture.mod.world.epchanges.CfGanymedeChunkgenWrapper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -16,14 +15,13 @@ import java.lang.reflect.Field;
 
 public class GanymedeInjector {
 
-    // The ID for Ganymede
     private static final int GANYMEDE_ID = -1506;
 
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Load event) {
         World world = event.getWorld();
         if (world.provider.getDimension() == GANYMEDE_ID) {
-          
+           
             if (world.isRemote) {
                 world.provider.setSkyRenderer(new GanymedeSkyProvider());
             } 
@@ -56,15 +54,15 @@ public class GanymedeInjector {
             Field genField = ReflectionHelper.findField(ChunkProviderServer.class, "chunkGenerator", "field_186029_c");
             genField.setAccessible(true);
 
-            IChunkGenerator originalGen = (IChunkGenerator) genField.get(provider);
+            IChunkGenerator currentGen = (IChunkGenerator) genField.get(provider);
 
-            // Prevent double-wrapping if this event fires twice
-            if (!(originalGen instanceof CfGanymedeChunkgenWrapper)) {
-                System.out.println("[Fracture] Injecting Wrapper Generator into Ganymede...");
+            if (!(currentGen instanceof CfGanymedeChunkgen)) {
+                System.out.println("[Fracture] Injecting Custom ChunkGen into Ganymede.");
                 
-                // Injector
-                IChunkGenerator myWrapper = new CfGanymedeChunkgenWrapper(originalGen);
-                genField.set(provider, myWrapper);
+                // Replace this its old
+                IChunkGenerator newGen = new CfGanymedeChunkgen(world, world.getSeed());
+                
+                genField.set(provider, newGen);
             }
 
         } catch (Exception e) {

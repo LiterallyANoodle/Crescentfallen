@@ -4,31 +4,48 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeProvider;
 import net.minecraft.init.Biomes;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.List;
 import java.util.Random;
 
 public class CfBiomeWrapper extends BiomeProvider {
-	
-	//Used for Europa at the moment
-	
+    
+    //Used for Europa at the moment
+    
     private final BiomeProvider original;
     private final long seed;
-    private final int SALT_SEA_ID = 43; 
     private Biome saltSeaBiome;
 
     // Settings
-    // Zoom 5 = 32x larger biomes (Was 4)
+    // Zoom 5 = 32x larger biomes (changed from 4)
     private final int zoomFactor = 5; 
-    
     // Ocean distribution (Controls size of seas vs land)
     private final double noiseScale = 0.015; 
-    private final double oceanThreshold = 0.15; 
+    //Ocean map concentration distribution(changed from 15)
+    private final double oceanThreshold = -0.2; 
+    // WIP
 
     public CfBiomeWrapper(BiomeProvider original, long seed) {
         this.original = original;
         this.seed = seed;
-        this.saltSeaBiome = Biome.getBiome(SALT_SEA_ID);
-        if (this.saltSeaBiome == null) this.saltSeaBiome = Biomes.OCEAN; 
+        
+        // Attempt to find a specific Salt Sea biome
+        this.saltSeaBiome = ForgeRegistries.BIOMES.getValue(new ResourceLocation("extraplanets", "europa_salt_sea"));
+        
+        if (this.saltSeaBiome == null) {
+            this.saltSeaBiome = ForgeRegistries.BIOMES.getValue(new ResourceLocation("extraplanets", "europa_ice_valleys"));
+        }
+        // Fallback
+        if (this.saltSeaBiome == null) {
+            this.saltSeaBiome = ForgeRegistries.BIOMES.getValue(new ResourceLocation("extraplanets", "europa"));
+        }
+
+        // If all registry string lookups fail, we extract a guaranteed valid Europa biome 
+        // directly from the original ExtraPlanets provider. This ensures saltSeaBiome is NEVER null.
+        if (this.saltSeaBiome == null && original != null) {
+            this.saltSeaBiome = original.getBiome(new BlockPos(0, 0, 0));
+        }
     }
 
     private boolean isOcean(int x, int z) {
