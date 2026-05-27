@@ -44,6 +44,8 @@ repositories {
 
     		//maven { url "https://minecraft.curseforge.com/api/maven" }
 
+	maven { url = "https://dvs1.progwml6.com/files/maven/" } // JEI
+
 
     maven { url "https://www.cursemaven.com" } 
     
@@ -99,6 +101,13 @@ dependencies {
   	deobfCompile "curse.maven:mjrlegendslib-284331:3344068"
   	
   	deobfCompile "curse.maven:extraplanets-241291:3031687"
+  	
+    deobfCompile "mezz.jei:jei_1.12.2:4.16.1.302:api"
+    
+    runtime "mezz.jei:jei_1.12.2:4.16.1.302"
+    
+  	
+  	//deobfCompile "mezz.jei:jei_1.12.2:4.16.1.302:api"
   	//deobfCompile files("libs/CustomNPCs_1.12.2-(05Jul20).jar")
   	//deobfCompile "curse.maven:custom-npcs-221826:2996912"
 	//compile "curse.maven:custom-npcs-221826:2992364"

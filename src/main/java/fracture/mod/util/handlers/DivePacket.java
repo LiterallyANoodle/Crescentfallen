@@ -8,7 +8,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 public class DivePacket implements IMessage {
     private float forward, strafe;
 
-    public DivePacket() {} // Required empty constructor
+    public DivePacket() {} 
 
     public DivePacket(float forward, float strafe) {
         this.forward = forward;
@@ -30,15 +30,12 @@ public class DivePacket implements IMessage {
     public float getForward() { return forward; }
     public float getStrafe() { return strafe; }
 
-    // The handler runs on the server
     public static class Handler implements IMessageHandler<DivePacket, IMessage> {
         @Override
         public IMessage onMessage(DivePacket message, MessageContext ctx) {
             ctx.getServerHandler().player.server.addScheduledTask(() -> {
-                fracture.mod.util.handlers.DiveHandler.performDive(
-                        ctx.getServerHandler().player,
-                        message.getForward(),
-                        message.getStrafe()
+                fracture.mod.util.handlers.DiveHandler.performServerDiveStats(
+                        ctx.getServerHandler().player
                 );
             });
             return null;

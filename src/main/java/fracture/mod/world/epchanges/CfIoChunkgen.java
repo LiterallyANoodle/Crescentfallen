@@ -138,7 +138,7 @@ public class CfIoChunkgen {
     }
 
     private void initBlocks() {
-        System.out.println("[Fracture] CFIoChunkgen: Initializing Cracks & Ash Rock...");
+        System.out.println("[Fracture] CFIoChunkgen: Initializing IO Features.");
 
         // Blocks
         Block ash = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("extraplanets", "ash_rock"));

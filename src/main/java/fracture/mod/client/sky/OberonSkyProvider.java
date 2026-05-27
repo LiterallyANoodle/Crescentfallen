@@ -86,235 +86,162 @@ public class OberonSkyProvider extends IRenderHandler {
     @Override
     public void render(float partialTicks, WorldClient world, Minecraft mc) {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-        Vec3d vec3 = world.getSkyColor(mc.getRenderViewEntity(), partialTicks);
-        float f1 = (float) vec3.x;
-        float f2 = (float) vec3.y;
-        float f3 = (float) vec3.z;
-        float f6;
+        Vec3d skyColorVec = world.getSkyColor(mc.getRenderViewEntity(), partialTicks);
+        float skyR = (float) skyColorVec.x;
+        float skyG = (float) skyColorVec.y;
+        float skyB = (float) skyColorVec.z;
 
-        if (mc.gameSettings.anaglyph) {
-            float f4 = (f1 * 30.0F + f2 * 59.0F + f3 * 11.0F) / 100.0F;
-            float f5 = (f1 * 30.0F + f2 * 70.0F) / 100.0F;
-            f6 = (f1 * 30.0F + f3 * 70.0F) / 100.0F;
-            f1 = f4;
-            f2 = f5;
-            f3 = f6;
-        }
-
-        GL11.glColor3f(f1, f2, f3);
-        Tessellator tessellator1 = Tessellator.getInstance();
-        BufferBuilder worldRenderer1 = tessellator1.getBuffer();
+        GL11.glColor3f(skyR, skyG, skyB);
         GL11.glDepthMask(false);
         GL11.glEnable(GL11.GL_FOG);
-        GL11.glColor3f(f1, f2, f3);
         GL11.glCallList(this.glSkyList);
         GL11.glDisable(GL11.GL_FOG);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
+
+        Tessellator tess = Tessellator.getInstance();
+        BufferBuilder buffer = tess.getBuffer();
+
+        GL11.glPushMatrix();
+        GL11.glRotatef(110.0F, 0.0F, 1.0F, 0.0F); 
+        GL11.glRotatef(95.0F, 1.0F, 0.0F, 0.0F); 
+        
         GL11.glEnable(GL11.GL_BLEND);
-        OpenGlHelper.glBlendFunc(770, 771, 1, 0);
-        RenderHelper.disableStandardItemLighting();
-        float f7;
-        float f8;
-        float f9;
-        float f10;
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        
+        OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, 1, 0); 
+        
+        renderThickCascadingDisc(tess, buffer);
+        
+        GL11.glPopMatrix();
 
-        float f18 = world.getStarBrightness(partialTicks);
+        OpenGlHelper.glBlendFunc(770, 771, 1, 0); 
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-        if (f18 > 0.0F) {
+        float celestialAngle = world.getCelestialAngle(partialTicks);
+        GL11.glPushMatrix();
+        GL11.glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
+        GL11.glRotatef(celestialAngle * 360.0F, 1.0F, 0.0F, 0.0F);
+
+        // Render Sun Aura
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glShadeModel(GL11.GL_SMOOTH);
+        float starBright = world.getStarBrightness(partialTicks);
+        float sunAlpha = 1.0F - starBright;
+        
+        buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
+        buffer.pos(0.0D, 100.0D, 0.0D).color(1.0f, 0.8f, 0.6f, 0.3f * sunAlpha).endVertex();
+        float auraSize = 25.0F;
+        for (int i = 0; i <= 8; i++) {
+            float a = (float) (i * Math.PI * 2.0 / 8.0);
+            buffer.pos(MathHelper.cos(a) * auraSize, 100.0D, MathHelper.sin(a) * auraSize).color(1.0f, 0.7f, 0.4f, 0.0f).endVertex();
+        }
+        tess.draw();
+        GL11.glShadeModel(GL11.GL_FLAT);
+
+        // Render Sun Texture
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        mc.renderEngine.bindTexture(sunTexture);
+        float s = this.sunSize;
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        buffer.pos(-s, 100.0D, -s).tex(0.0D, 0.0D).endVertex();
+        buffer.pos(s, 100.0D, -s).tex(1.0D, 0.0D).endVertex();
+        buffer.pos(s, 100.0D, s).tex(1.0D, 1.0D).endVertex();
+        buffer.pos(-s, 100.0D, s).tex(0.0D, 1.0D).endVertex();
+        tess.draw();
+        GL11.glPopMatrix();
+
+        GL11.glPushMatrix();
+        GL11.glRotatef(60.0F, 0.0F, 1.0F, 0.0F);
+        GL11.glRotatef(-20.0F, 1.0F, 0.0F, 0.0F); 
+        mc.renderEngine.bindTexture(overworldTexture);
+        float uSize = 32.0F; 
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        buffer.pos(-uSize, 100.0D, -uSize).tex(0, 0).endVertex();
+        buffer.pos(uSize, 100.0D, -uSize).tex(1, 0).endVertex();
+        buffer.pos(uSize, 100.0D, uSize).tex(1, 1).endVertex();
+        buffer.pos(-uSize, 100.0D, uSize).tex(0, 1).endVertex();
+        tess.draw();
+        GL11.glPopMatrix();
+
+        if (starBright > 0.0F) {
             GL11.glPushMatrix();
             GL11.glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
-            GL11.glRotatef(world.getCelestialAngle(partialTicks) * 360.0F, 1.0F, 0.0F, 0.0F);
-            GL11.glRotatef(-19.0F, 0, 1.0F, 0);
-            GL11.glColor4f(f18, f18, f18, f18);
+            GL11.glRotatef(celestialAngle * 360.0F, 1.0F, 0.0F, 0.0F);
+            GL11.glColor4f(starBright, starBright, starBright, starBright);
             GL11.glCallList(this.starList);
             GL11.glPopMatrix();
         }
 
-        float[] afloat = new float[4];
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glShadeModel(GL11.GL_SMOOTH);
-        GL11.glPushMatrix();
-        GL11.glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
-        GL11.glRotatef(world.getCelestialAngle(partialTicks) * 360.0F, 1.0F, 0.0F, 0.0F);
-        afloat[0] = 255 / 255.0F;
-        afloat[1] = 194 / 255.0F;
-        afloat[2] = 180 / 255.0F;
-        afloat[3] = 0.3F;
-        f6 = afloat[0];
-        f7 = afloat[1];
-        f8 = afloat[2];
-        float f11;
-
-        if (mc.gameSettings.anaglyph) {
-            f9 = (f6 * 30.0F + f7 * 59.0F + f8 * 11.0F) / 100.0F;
-            f10 = (f6 * 30.0F + f7 * 70.0F) / 100.0F;
-            f11 = (f6 * 30.0F + f8 * 70.0F) / 100.0F;
-            f6 = f9;
-            f7 = f10;
-            f8 = f11;
-        }
-
-        f18 = 1.0F - f18;
-
-        worldRenderer1.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-        float r = f6 * f18;
-        float g = f7 * f18;
-        float b = f8 * f18;
-        float a = afloat[3] * 2 / f18;
-        worldRenderer1.pos(0.0D, 100.0D, 0.0D).color(r, g, b, a).endVertex();
-        r = afloat[0] * f18;
-        g = afloat[1] * f18;
-        b = afloat[2] * f18;
-        a = 0.0F;
-
-        // Render sun aura
-        f10 = 20.0F;
-        worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(0, 100.0D, (double) -f10 * 1.5F).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-        worldRenderer1.pos((double) f10 * 1.5F, 100.0D, 0).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(f10, 100.0D, f10).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(0, 100.0D, (double) f10 * 1.5F).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(-f10, 100.0D, f10).color(r, g, b, a).endVertex();
-        worldRenderer1.pos((double) -f10 * 1.5F, 100.0D, 0).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-
-        tessellator1.draw();
-        worldRenderer1.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-        r = f6 * f18;
-        g = f7 * f18;
-        b = f8 * f18;
-        a = afloat[3] * f18;
-        worldRenderer1.pos(0.0D, 100.0D, 0.0D).color(r, g, b, a).endVertex();
-        r = afloat[0] * f18;
-        g = afloat[1] * f18;
-        b = afloat[2] * f18;
-        a = 0.0F;
-
-        // Render larger sun aura
-        f10 = 40.0F;
-        worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(0, 100.0D, (double) -f10 * 1.5F).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-        worldRenderer1.pos((double) f10 * 1.5F, 100.0D, 0).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(f10, 100.0D, f10).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(0, 100.0D, (double) f10 * 1.5F).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(-f10, 100.0D, f10).color(r, g, b, a).endVertex();
-        worldRenderer1.pos((double) -f10 * 1.5F, 100.0D, 0).color(r, g, b, a).endVertex();
-        worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-
-        tessellator1.draw();
-        GL11.glPopMatrix();
-        GL11.glShadeModel(GL11.GL_FLAT);
-
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
-        GL11.glPushMatrix();
-        f7 = 0.0F;
-        f8 = 0.0F;
-        f9 = 0.0F;
-        GL11.glTranslatef(f7, f8, f9);
-        GL11.glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
-        GL11.glRotatef(world.getCelestialAngle(partialTicks) * 360.0F, 1.0F, 0.0F, 0.0F);
-        // Render sun
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glColor4f(0.0F, 0.0F, 0.0F, 1.0F);
-        // Some blanking to conceal the stars
-        f10 = this.sunSize / 3.5F;
-        worldRenderer1.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
-        worldRenderer1.pos(-f10, 99.9D, -f10).endVertex();
-        worldRenderer1.pos(f10, 99.9D, -f10).endVertex();
-        worldRenderer1.pos(f10, 99.9D, f10).endVertex();
-        worldRenderer1.pos(-f10, 99.9D, f10).endVertex();
-        tessellator1.draw();
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        f10 = this.sunSize;
-        mc.renderEngine.bindTexture(OberonSkyProvider.sunTexture);
-        worldRenderer1.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        worldRenderer1.pos(-f10, 100.0D, -f10).tex(0.0D, 0.0D).endVertex();
-        worldRenderer1.pos(f10, 100.0D, -f10).tex(1.0D, 0.0D).endVertex();
-        worldRenderer1.pos(f10, 100.0D, f10).tex(1.0D, 1.0D).endVertex();
-        worldRenderer1.pos(-f10, 100.0D, f10).tex(0.0D, 1.0D).endVertex();
-        tessellator1.draw();
-
-        // Render Uranus
-        f10 = (sunSize * 1.5F) * 0.25F;
-        GL11.glScalef(0.6F, 0.6F, 0.6F);
-        GL11.glRotatef(40.0F, 0.0F, 0.0F, 1.0F);
-        GL11.glRotatef(200F, 1.0F, 0.0F, 0.0F);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1F);
-        MCUtilities.getClient().renderEngine.bindTexture(OberonSkyProvider.overworldTexture);
-        worldRenderer1.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        worldRenderer1.pos(-f10, -100.0D, f10).tex(0, 1).endVertex();
-        worldRenderer1.pos(f10, -100.0D, f10).tex(1, 1).endVertex();
-        worldRenderer1.pos(f10, -100.0D, -f10).tex(1, 0).endVertex();
-        worldRenderer1.pos(-f10, -100.0D, -f10).tex(0, 0).endVertex();
-        tessellator1.draw();
-
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-        GL11.glEnable(GL11.GL_FOG);
-        GL11.glPopMatrix();
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glColor3f(0.0F, 0.0F, 0.0F);
-        double d0 = mc.player.getPosition().getY() - world.getHorizon();
-
-        if (d0 < 0.0D) {
-            GL11.glPushMatrix();
-            GL11.glTranslatef(0.0F, 12.0F, 0.0F);
-            GL11.glCallList(this.glSkyList2);
-            GL11.glPopMatrix();
-            f8 = 1.0F;
-            f9 = -((float) (d0 + 65.0D));
-            f10 = -f8;
-            worldRenderer1.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-            worldRenderer1.pos(-f8, f9, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f9, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f10, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(-f8, f10, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(-f8, f10, -f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f10, -f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f9, -f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(-f8, f9, -f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f10, -f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f10, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f9, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f9, -f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(-f8, f9, -f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(-f8, f9, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(-f8, f10, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(-f8, f10, -f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(-f8, f10, -f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(-f8, f10, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f10, f8).color(0, 0, 0, 1.0F).endVertex();
-            worldRenderer1.pos(f8, f10, -f8).color(0, 0, 0, 1.0F).endVertex();
-            tessellator1.draw();
-        }
-
-        if (world.provider.isSkyColored()) {
-            GL11.glColor3f(f1 * 0.2F + 0.04F, f2 * 0.2F + 0.04F, f3 * 0.6F + 0.1F);
-        } else {
-            GL11.glColor3f(f1, f2, f3);
-        }
-
-        GL11.glPushMatrix();
-        GL11.glTranslatef(0.0F, -((float) (d0 - 16.0D)), 0.0F);
-        GL11.glCallList(this.glSkyList2);
-        GL11.glPopMatrix();
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        GL11.glEnable(GL11.GL_COLOR_MATERIAL);
-        OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
         GL11.glDepthMask(true);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glDisable(GL11.GL_BLEND);
     }
 
+    private void renderThickCascadingDisc(Tessellator tess, BufferBuilder buffer) {
+        float radius = 95.0F; 
+        float ringHeight = 10.0F; // 17% Thinner
+        int segments = 120;
+        long time = System.currentTimeMillis();
+        Random rand = new Random(3333L);
+
+        float r = 0.1f, g = 0.6f, b = 1.0f;
+        float peakAlpha = 0.5f;
+
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        for (int i = 0; i < segments; i++) {
+            float a1 = (float) (i * Math.PI * 2.0 / segments);
+            float a2 = (float) ((i + 1) * Math.PI * 2.0 / segments);
+
+            float sideFade = MathHelper.sin((float)i / segments * (float)Math.PI);
+            sideFade = MathHelper.clamp(sideFade, 0.0f, 1.0f);
+
+            float x1 = MathHelper.cos(a1) * radius;
+            float z1 = MathHelper.sin(a1) * radius;
+            float x2 = MathHelper.cos(a2) * radius;
+            float z2 = MathHelper.sin(a2) * radius;
+
+            buffer.pos(x1, -ringHeight, z1).color(r, g, b, 0.0f).endVertex();
+            buffer.pos(x2, -ringHeight, z2).color(r, g, b, 0.0f).endVertex();
+            buffer.pos(x2, 0, z2).color(r, g, b, peakAlpha * sideFade).endVertex();
+            buffer.pos(x1, 0, z1).color(r, g, b, peakAlpha * sideFade).endVertex();
+            
+
+            buffer.pos(x1, 0, z1).color(r, g, b, peakAlpha * sideFade).endVertex();
+            buffer.pos(x2, 0, z2).color(r, g, b, peakAlpha * sideFade).endVertex();
+            buffer.pos(x2, ringHeight, z2).color(r, g, b, 0.0f).endVertex();
+            buffer.pos(x1, ringHeight, z1).color(r, g, b, 0.0f).endVertex();
+        }
+        tess.draw();
+
+        float pSize = 0.35f; 
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        for (int i = 0; i < 75; i++) {
+            float angle = rand.nextFloat() * (float)Math.PI * 2.0f;
+            float sideFade = MathHelper.sin(angle);
+            sideFade = MathHelper.clamp(sideFade, 0.0f, 1.0f);
+
+            float yOff = (rand.nextFloat() * ringHeight * 1.8F) - (ringHeight * 0.9F);
+            float x = MathHelper.cos(angle) * (radius - 0.2f);
+            float z = MathHelper.sin(angle) * (radius - 0.2f);
+
+            float speed = 18000.0f;
+            float cycle = ((time + (i * 700)) % (long)speed) / speed;
+            
+            float brightness = 0.15f; 
+            if (cycle < 0.15f) brightness += (cycle / 0.15f) * 0.85f;
+            else if (cycle < 0.3f) brightness += (1.0f - ((cycle - 0.15f) / 0.15f)) * 0.85f;
+
+            float finalAlpha = brightness * sideFade;
+
+            buffer.pos(x - pSize, yOff - pSize, z).color(0.5f, 0.8f, 1.0f, finalAlpha).endVertex();
+            buffer.pos(x + pSize, yOff - pSize, z).color(0.5f, 0.8f, 1.0f, finalAlpha).endVertex();
+            buffer.pos(x + pSize, yOff + pSize, z).color(0.5f, 0.8f, 1.0f, finalAlpha).endVertex();
+            buffer.pos(x - pSize, yOff + pSize, z).color(0.5f, 0.8f, 1.0f, finalAlpha).endVertex();
+        }
+        tess.draw();
+    }
     private void renderStars() {
         final Random rand = new Random(10842L);
         final Tessellator var2 = Tessellator.getInstance();

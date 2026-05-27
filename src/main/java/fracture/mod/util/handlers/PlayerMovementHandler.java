@@ -22,6 +22,7 @@ public class PlayerMovementHandler {
 	    
 	    if (!player.isSpectator() && !player.isSneaking()) {
 	        // Raise base walk speed in all directions to match vanilla sprint
+	    	// Tie this to spacesuit later and fix viewbobbing
 	        if (player.capabilities.getWalkSpeed() < 0.15F) {
 	            player.capabilities.setPlayerWalkSpeed(0.15F);
 	        }

@@ -15,6 +15,9 @@ import fracture.mod.world.gen.AlphaRoseGenerator;
 /**
  * Event handler that triggers AlphaRoseGenerator during chunk decoration in Dark Forests.
  */
+
+	//Note: this is non functional. Fix later
+
 public class FlowerSpawnHandler {
 
     private final AlphaRoseGenerator generator;

@@ -1,5 +1,6 @@
 package fracture.mod;
 
+import fracture.mod.client.sky.AsteroidSkyHandler;
 //import fracture.mod.client.render.HidePressureOverlay;
 //import fracture.mod.AddonConfig.Dimension;
 import fracture.mod.init.CFdimensions;
@@ -25,6 +26,12 @@ import fracture.mod.util.handlers.SlideCancelPacket;
 import fracture.mod.world.epchanges.CfEuropaChunkgen;
 import fracture.mod.world.epchanges.CfIoChunkgen;
 import fracture.mod.world.epchanges.CfOberonChunkgen;
+import fracture.mod.world.epchanges.callisto.CFEPBiomeInit;
+import fracture.mod.world.epchanges.callisto.CfCallistoBiomeAddon;
+//import fracture.mod.world.epchanges.callisto.CfCallistoBiomeTweaker;
+//import fracture.mod.world.epchanges.callisto.CfCallistoFaultGen;
+import fracture.mod.world.epchanges.callisto.CfCallistoPyramidGen;
+import fracture.mod.world.epchanges.callisto.CfCallistoStructureGen;
 //import fracture.mod.world.epchanges.WorldGenEuropaIce;
 //import fracture.mod.world.epchanges.IoTerrainDecorator;
 //import fracture.mod.world.epchanges.WorldGenIoOptimized;
@@ -110,10 +117,10 @@ public class CFMain {
 	    //System.out.println("--------------------------------------------------");
 	    //System.out.println("[Fracture] PRE-INIT STARTED");
 	    
-	    // Register the Generator here (Safer than init)
 	    MinecraftForge.EVENT_BUS.register(new CfIoChunkgen());	    
 	    MinecraftForge.EVENT_BUS.register(new CfEuropaChunkgen());
 	    MinecraftForge.EVENT_BUS.register(new CfOberonChunkgen());
+	    MinecraftForge.EVENT_BUS.register(new CfCallistoBiomeAddon());
 	    //GameRegistry.registerWorldGenerator(new WorldGenEuropaIce(), 2000); // Higher weight runs later
 	    //System.out.println("[Fracture] Generator Registered successfully!");
 	    //System.out.println("--------------------------------------------------");
@@ -190,7 +197,7 @@ public class CFMain {
                 // client-side slide visuals(not working)
                 MinecraftForge.EVENT_BUS.register(new fracture.mod.util.handlers.SlideClientHandler());
             }
-            MinecraftForge.EVENT_BUS.register(new fracture.mod.util.handlers.GanymedeInjector());
+            MinecraftForge.EVENT_BUS.register(new fracture.mod.world.epchanges.GanymedeInjector());
 		//...
             // Replacer test
             //MinecraftForge.EVENT_BUS.register(new IoTerrainDecorator());
@@ -199,7 +206,19 @@ public class CFMain {
             //GameRegistry.registerWorldGenerator(new WorldGenIoOptimized(), 1000);
             //MinecraftForge.EVENT_BUS.register(new IoFastReplacer());
             //alpha rose spawner(not working)
+         // USE GalaxyRegistry instead of GalacticraftRegistry
+            micdoodle8.mods.galacticraft.api.galaxies.CelestialBody callisto = 
+                micdoodle8.mods.galacticraft.api.galaxies.GalaxyRegistry.getRegisteredMoons().get("callisto");
+
+            // You can keep the callisto check if you intend to modify other CelestialBody properties later,
+            // but the biomesToAdapt array is no longer needed.
+            if (callisto != null) {
+               // Future Callisto configuration can go here.
+            }
             
+            GameRegistry.registerWorldGenerator(new CfCallistoStructureGen(), 100);
+            //GameRegistry.registerWorldGenerator(new CfCallistoFaultGen(), 200);
+            GameRegistry.registerWorldGenerator(new CfCallistoPyramidGen(), 500);
             MinecraftForge.EVENT_BUS.register(new FlowerSpawnHandler());
             // Register IO World Load Tweaker
             //MinecraftForge.EVENT_BUS.register(new IoWorldTweaker());
@@ -231,10 +250,16 @@ public class CFMain {
 		//CFdimensions.init();
         //fracture.mod.world.epchanges.IoBiomeTweaker.tweak();
         //MinecraftForge.EVENT_BUS.register(new fracture.mod.world.epchanges.IoTerrainEventHandler());        
-        
-        
-        
+        micdoodle8.mods.galacticraft.api.galaxies.CelestialBody callisto = micdoodle8.mods.galacticraft.api.galaxies.GalaxyRegistry.getRegisteredMoons().get("callisto");
 
+//        if (callisto != null) {
+//            callisto.biomesToAdapt = new micdoodle8.mods.galacticraft.api.world.BiomeGenBaseGC[] {
+//                (micdoodle8.mods.galacticraft.api.world.BiomeGenBaseGC) CFEPBiomeInit.CALLISTO_BLACK_DESERT,
+//                (micdoodle8.mods.galacticraft.api.world.BiomeGenBaseGC) CFEPBiomeInit.CALLISTO_OIL_SHALE,
+//                (micdoodle8.mods.galacticraft.api.world.BiomeGenBaseGC) CFEPBiomeInit.CALLISTO_ROCKIES
+//            };
+//        }
+        //new CfCallistoBiomeTweaker().tweakBiomes();
         
 		proxy.postInit(event);
 		//new CFsolarsystems();

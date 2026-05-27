@@ -300,7 +300,6 @@ public class IoSkyProvider extends IRenderHandler {
         BufferBuilder worldRenderer = var2.getBuffer();
         worldRenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
 
-        // Standard star generation
         for (int starIndex = 0; starIndex < (ConfigManagerCore.moreStars ? 35000 : 6000); ++starIndex) {
             double var4 = rand.nextFloat() * 2.0F - 1.0F;
             double var6 = rand.nextFloat() * 2.0F - 1.0F;

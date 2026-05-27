@@ -6,19 +6,25 @@ import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound; // Required for Manual ID
 import net.minecraft.util.EnumHandSide;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.renderers.geo.GeoItemRenderer;
-
-//Wip, not functioning
+import net.minecraft.client.renderer.BufferBuilder;
 
 public class HybridGunRenderer extends GeoItemRenderer<ItemCustomGun> {
 
-    private int debugTimer = 0;
-
     public HybridGunRenderer() {
         super(new ModelCustomGun());
+    }
+
+    @Override
+    public void renderRecursively(BufferBuilder builder, GeoBone bone, float red, float green, float blue, float alpha) {
+        if (bone.getName().equals("hr") || bone.getName().equals("hl")) {
+            return; // Skip drawing cubes
+        }
+        super.renderRecursively(builder, bone, red, green, blue, alpha);
     }
 
     @Override
@@ -29,130 +35,97 @@ public class HybridGunRenderer extends GeoItemRenderer<ItemCustomGun> {
             return;
         }
 
-        // Run debug logs only once every 100 frames to avoid lag
-        boolean doDebug = (debugTimer++ % 100 == 0);
-
-        GlStateManager.pushMatrix();
-
-        // --- 1. GLOBAL POSITIONING ---
-        // Center the rig in the hand
-        GlStateManager.translate(0.5, 0.5, 0.5);
-
-
-        GlStateManager.scale(0.0625F, 0.0625F, 0.0625F); 
-        
-
         ItemCustomGun animatable = (ItemCustomGun) itemStack.getItem();
         GeoModel model = this.getGeoModelProvider().getModel(this.getGeoModelProvider().getModelLocation(animatable));
+        float partialTicks = Minecraft.getMinecraft().getRenderPartialTicks();
+
+        int stackID = getOrCreateGeckoID(itemStack); 
+        animatable.getFactory().getOrCreateAnimationData(stackID);
+
+        GlStateManager.pushMatrix();
+
+        GlStateManager.translate(0.1F, 0.1F, -1.5F); 
+        GlStateManager.scale(0.5F, 0.5F, 0.5F);
+        GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F); 
         
-
-        if (doDebug) {
-            System.out.println("--- [FRACTURE DEBUG] START ---");
-            if (model.topLevelBones.isEmpty()) {
-                System.out.println("CRITICAL: Model loaded but has NO bones! Check JSON Identifier.");
-            } else {
-
-                checkBonePivot(model, "Gun");
-            }
-        }
-
-
         Minecraft.getMinecraft().renderEngine.bindTexture(this.getGeoModelProvider().getTextureLocation(animatable));
 
-
-        setBoneVisibility(model, "Arms", false);
-        setBoneVisibility(model, "Gun", true);
+        super.render(model, animatable, partialTicks, 1.0F, 1.0F, 1.0F, 1.0F);
         
+        GeoBone rootBone = getBoneRecursive(model, "root");
+        GeoBone armsBone = getBoneRecursive(model, "Arms");
+        GeoBone rightArmBone = getBoneRecursive(model, "hr");
+        GeoBone leftArmBone = getBoneRecursive(model, "hl");
 
-        this.render(model, animatable, 0, 0, 0, 0, 0);
-
-
-        if(model.topLevelBones != null) {
-            for(GeoBone groupBone : model.topLevelBones) {
-                if(groupBone.name.equals("Arms")) {
-                    for(GeoBone childBone : groupBone.childBones) {
-                        if(childBone.name.equals("hr")) {
-                            renderVanillaArm(player, groupBone, childBone, EnumHandSide.RIGHT);
-                        }
-                        else if(childBone.name.equals("hl")) {
-                            renderVanillaArm(player, groupBone, childBone, EnumHandSide.LEFT);
-                        }
-                    }
-                }
-            }
+        if (rootBone != null && armsBone != null) {
+            if (rightArmBone != null) renderVanillaArm(player, rootBone, armsBone, rightArmBone, EnumHandSide.RIGHT);
+            if (leftArmBone != null) renderVanillaArm(player, rootBone, armsBone, leftArmBone, EnumHandSide.LEFT);
         }
-
-
-        setBoneVisibility(model, "Arms", true);
-        setBoneVisibility(model, "Gun", true);
 
         GlStateManager.popMatrix();
     }
 
-    private void renderVanillaArm(AbstractClientPlayer player, GeoBone parent, GeoBone bone, EnumHandSide side) {
+    // Workaround for older GeckoLib versions missing guaranteeIDForStack
+    private int getOrCreateGeckoID(ItemStack stack) {
+        if (!stack.hasTagCompound()) stack.setTagCompound(new NBTTagCompound());
+        NBTTagCompound tag = stack.getTagCompound();
+        if (!tag.hasKey("GeckoID")) {
+            int id = Minecraft.getMinecraft().player.ticksExisted + (int)(Math.random() * 10000);
+            tag.setInteger("GeckoID", id);
+        }
+        return tag.getInteger("GeckoID");
+    }
+
+    private void renderVanillaArm(AbstractClientPlayer player, GeoBone root, GeoBone arms, GeoBone hand, EnumHandSide side) {
         GlStateManager.pushMatrix();
-        
+        applyBoneTransform(root);
+        applyBoneTransform(arms);
+        applyBoneTransform(hand);
 
-        GlStateManager.translate(parent.rotationPointX, parent.rotationPointY, parent.rotationPointZ);
-        GlStateManager.translate(parent.getPositionX(), parent.getPositionY(), parent.getPositionZ());
-        GlStateManager.rotate(parent.getRotationZ(), 0, 0, 1);
-        GlStateManager.rotate(parent.getRotationY(), 0, 1, 0);
-        GlStateManager.rotate(parent.getRotationX(), 1, 0, 0);
+        float f = 0.0625F; 
+        if (side == EnumHandSide.RIGHT) GlStateManager.translate(-5.0F * f, 2.0F * f, 1.0F * f); 
+        else GlStateManager.translate(5.0F * f, 2.0F * f, 1.0F * f);
 
-
-        GlStateManager.translate(bone.rotationPointX, bone.rotationPointY, bone.rotationPointZ);
-        GlStateManager.translate(bone.getPositionX(), bone.getPositionY(), bone.getPositionZ());
-        GlStateManager.rotate(bone.getRotationZ(), 0, 0, 1);
-        GlStateManager.rotate(bone.getRotationY(), 0, 1, 0);
-        GlStateManager.rotate(bone.getRotationX(), 1, 0, 0);
-        
-
-        GlStateManager.scale(16.0F, 16.0F, 16.0F); 
         RenderPlayer renderPlayer = Minecraft.getMinecraft().getRenderManager().getSkinMap().get(player.getSkinType());
         Minecraft.getMinecraft().renderEngine.bindTexture(player.getLocationSkin());
-
+        
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F); 
         GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F); 
-
-        if (side == EnumHandSide.RIGHT) {
-             renderPlayer.renderRightArm(player);
-        } else {
-             renderPlayer.renderLeftArm(player);
-        }
-
+        
+        if (side == EnumHandSide.RIGHT) renderPlayer.renderRightArm(player);
+        else renderPlayer.renderLeftArm(player);
+        
         GlStateManager.popMatrix();
     }
 
-    private void setBoneVisibility(GeoModel model, String boneName, boolean visible) {
-        if(model.topLevelBones != null) {
-            for (GeoBone bone : model.topLevelBones) {
-                recursiveVisibility(bone, boneName, visible);
-            }
-        }
+    private void applyBoneTransform(GeoBone bone) {
+        float f = 0.0625F; 
+        GlStateManager.translate((bone.rotationPointX + bone.getPositionX()) * f, 
+                                 (bone.rotationPointY + bone.getPositionY()) * f, 
+                                 (bone.rotationPointZ + bone.getPositionZ()) * f);
+        GlStateManager.rotate((float)Math.toDegrees(bone.getRotationX()), 1, 0, 0);
+        GlStateManager.rotate((float)Math.toDegrees(bone.getRotationY()), 0, 1, 0);
+        GlStateManager.rotate((float)Math.toDegrees(bone.getRotationZ()), 0, 0, 1);
+        GlStateManager.translate(-bone.rotationPointX * f, -bone.rotationPointY * f, -bone.rotationPointZ * f);
     }
 
-    private void recursiveVisibility(GeoBone bone, String targetName, boolean visible) {
-        if (bone.name.equals(targetName)) {
-            bone.isHidden = !visible;
-        }
-        if (bone.childBones != null) {
-            for (GeoBone child : bone.childBones) {
-                recursiveVisibility(child, targetName, visible);
-            }
-        }
-    }
-
-
-    private void checkBonePivot(GeoModel model, String targetName) {
+    private GeoBone getBoneRecursive(GeoModel model, String boneName) {
+        if (model == null || model.topLevelBones == null) return null;
         for (GeoBone bone : model.topLevelBones) {
-            if (bone.name.equals(targetName)) {
-                System.out.println("   [DEBUG] Bone '" + targetName + "' Pivot: " + 
-                    bone.rotationPointX + ", " + 
-                    bone.rotationPointY + ", " + 
-                    bone.rotationPointZ);
-                return;
+            GeoBone result = searchBoneTree(bone, boneName);
+            if (result != null) return result;
+        }
+        return null;
+    }
+
+    private GeoBone searchBoneTree(GeoBone currentBone, String targetName) {
+        if (currentBone.name.equals(targetName)) return currentBone;
+        if (currentBone.childBones != null) {
+            for (GeoBone child : currentBone.childBones) {
+                GeoBone result = searchBoneTree(child, targetName);
+                if (result != null) return result;
             }
         }
-        System.out.println("   [DEBUG] Could NOT find bone: " + targetName);
+        return null;
     }
 }
