@@ -28,7 +28,15 @@ public class KeybindHandler {
         if (diveKey.isPressed()) {
             float forward = player.movementInput.moveForward;
             float strafe = player.movementInput.moveStrafe;
-            CFMain.NETWORK.sendToServer(new DivePacket(forward, strafe));
+            
+            // Execute locally
+            boolean success = DiveHandler.performClientDive(player, forward, strafe);
+            
+            // If the client allowed the dive, tell the server to apply exhaustion/cooldown
+            //Note: this may be breaking the rest of the system
+            if (success) {
+                CFMain.NETWORK.sendToServer(new DivePacket(forward, strafe));
+            }
         }
     }
 }

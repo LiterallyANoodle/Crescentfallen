@@ -7,6 +7,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.obj.OBJLoader;
 import fracture.mod.client.event.HidePressureScissor;
+import fracture.mod.client.sky.AsteroidSkyHandler;
 //import fracture.mod.client.event.HidePressureTick;
 import fracture.mod.util.Reference;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -36,6 +37,7 @@ public class ClientProxy extends Proxy {
         super.preInit(event);
         // init OBJ loader
         OBJLoader.INSTANCE.addDomain("fracture");
+        MinecraftForge.EVENT_BUS.register(new AsteroidSkyHandler());
     }
 
     @Override
@@ -43,7 +45,7 @@ public class ClientProxy extends Proxy {
         super.init(event);
 
         MinecraftForge.EVENT_BUS.register(new HidePressureScissor());
-        
+        //MinecraftForge.TERRAIN_GEN_BUS.register(new fracture.mod.world.epchanges.callisto.CfCallistoTerrainSculptor());
         // GUN SYSTEM HANDLERS TESTING
         
         // Register the Logic Handler (Used for firing animation)

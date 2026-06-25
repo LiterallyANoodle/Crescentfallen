@@ -18,11 +18,10 @@ public class SlideClientHandler {
         if (!(event.getEntityLiving() instanceof EntityPlayerSP)) return;
         EntityPlayerSP player = (EntityPlayerSP) event.getEntityLiving();
 
-        // If player is sliding, spawn client-side dust particles
+        // Spawn dust particles if player is sliding
         String state = player.getEntityData().getString("diveState");
         if (!"SLIDING".equals(state)) return;
 
-        // spawn a few particles at the player's feet
         for (int i = 0; i < 3; i++) {
             double px = player.posX + (player.world.rand.nextDouble() - 0.5) * 0.6;
             double py = player.posY + 0.1;

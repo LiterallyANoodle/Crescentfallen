@@ -29,7 +29,7 @@ public class CommonEventHandler {
                     
                     ReflectionHelper.setPrivateValue(WorldProvider.class, event.getWorld().provider, newWrapper, "biomeProvider", "field_76578_c");
                     
-                    System.out.println("[Fracture] Europa Biomes OVERRIDDEN (Massive Oceans) on side: " + (event.getWorld().isRemote ? "CLIENT" : "SERVER"));
+                    System.out.println("[Fracture] Europa Biomes OVERRIDDEN (Europa salt sea) on side: " + (event.getWorld().isRemote ? "CLIENT" : "SERVER"));
                 }
             }
         }
