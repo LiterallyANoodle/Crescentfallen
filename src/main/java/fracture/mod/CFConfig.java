@@ -27,6 +27,9 @@ public class CFConfig {
 	// @Config.Comment(value = "Solar System Configuration.")
 	// public static final SolarSystemSettings addon_solarsystem = new
 	// SolarSystemSettings();
+	
+	
+	
 
 	@Config.LangKey(value = "Crescentfallen planet settings")
 	@Config.Comment(value = "Planet Configuration.")
@@ -82,8 +85,8 @@ public class CFConfig {
 		// @Config.Name(value = "PlanetOneS2 Dimension ID")
 		// public static final int p1s2Id = -660;
 
-		//@Config.Name(value = "Fracture Moon Dimension ID")
-		//public static final int konaID = -4402;
+		@Config.Name(value = "Fracture Moon Dimension ID")
+		public static final int konaID = -4402;
 
 		// @Config.Name(value = "PlanetTwo Space Station Dimension ID")
 		// public int idSpaceStation = -4450;
@@ -107,6 +110,9 @@ public class CFConfig {
 		@Config.RequiresMcRestart
 		public int planetThreeTier = 3;
 
+		@Config.Name(value = "Kona rocket tier")
+		@Config.RequiresMcRestart
+		public int konaTier = 3;
 
 	}
 
@@ -148,7 +154,15 @@ public class CFConfig {
 
 		@Config.Name(value = "Base Schematic GUI ID")
 		public int idBaseSchematicGui = 780;
-
+//Crescentfallen exclusive code
 	}
+	@Config.Name("Destruction Event Settings")
+    public static final DestructionEvent destructionEvent = new DestructionEvent();
 
+    public static class DestructionEvent {
+        @Config.Comment("Toggle the 3-day Earth destruction event. Set to false to disable.")
+        @Config.Name("Enable Destruction Event")
+        public boolean enableEvent = true;
+    }
 }
+

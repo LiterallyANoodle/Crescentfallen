@@ -63,7 +63,6 @@ public class SpaceGrass extends Block implements IHasModel
 	public void randomDisplayTick(IBlockState state, World world, BlockPos pos, Random random) {
 	    super.randomDisplayTick(state, world, pos, random);
 
-	    // Vanilla Mycelium
 	    if (random.nextInt(10) == 0) {
 	        
 	        double x = (double)pos.getX() + random.nextDouble();

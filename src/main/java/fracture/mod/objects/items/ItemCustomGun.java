@@ -84,7 +84,9 @@ public class ItemCustomGun extends ItemGun implements IHasModel, IAnimatable {
              long lastFired = tag.getLong("LastFiredTick");
              if (currentTick - lastFired < 3) { // Window reduced from 5 to 3
                  if (!currentAnim.equals("animation_fire")) {
-                    event.getController().setAnimation(new AnimationBuilder().addAnimation("animation_fire", false));
+                     // Pass true here so automatic weapons repeat their recoil cycles smoothly
+                     boolean isAuto = this.getGun().general.auto;
+                     event.getController().setAnimation(new AnimationBuilder().addAnimation("animation_fire", isAuto));
                  }
                  return PlayState.CONTINUE;
              }
@@ -96,7 +98,7 @@ public class ItemCustomGun extends ItemGun implements IHasModel, IAnimatable {
                 event.getController().setAnimation(new AnimationBuilder().addAnimation("animation_walk", true));
             }
         } else {
-        	// Changes here
+            // Changes here
             if (!currentAnim.equals("animation_idle") && !currentAnim.equals("animation_fire")) {
                 event.getController().setAnimation(new AnimationBuilder().addAnimation("animation_idle", true));
             }

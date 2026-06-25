@@ -128,7 +128,6 @@ public class IoSkyProvider extends IRenderHandler {
         OpenGlHelper.glBlendFunc(770, 771, 1, 0);
         RenderHelper.disableStandardItemLighting();
 
-        // Parallax stars
         float celestialAngle = world.getCelestialAngle(partialTicks);
         
         GlStateManager.pushMatrix();

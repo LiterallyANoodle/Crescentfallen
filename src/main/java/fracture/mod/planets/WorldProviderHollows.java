@@ -8,7 +8,7 @@ import fracture.mod.init.CFplanets;
 import fracture.mod.CFConfig;
 import fracture.mod.init.BlockInit;
 import fracture.mod.planets.hollows.ChunkProviderHollows;
-import fracture.mod.planets.hollows.CloudsHollows;
+//import fracture.mod.planets.hollows.CloudsHollows;
 import fracture.mod.planets.hollows.SkyProviderHollows;
 import fracture.mod.planets.hollows.hollows.biome.BiomeProviderHollows;
 import micdoodle8.mods.galacticraft.api.galaxies.CelestialBody;
@@ -47,10 +47,10 @@ public class WorldProviderHollows extends WorldProviderSpace implements ISolarLe
 	 //   return null; 
 	//}
 	
-	  protected void renderCloud() {
-		    setCloudRenderer((IRenderHandler)new CloudsHollows());
-		  }
-	  
+//	  protected void renderCloud() {
+//		    setCloudRenderer((IRenderHandler)new CloudsHollows());
+//		  }
+//	  
 	  public double getYCoordinateToTeleport() {
 		    return 150.0D;
 		  }
@@ -60,13 +60,13 @@ public class WorldProviderHollows extends WorldProviderSpace implements ISolarLe
 	  
 	  
 	  
-	//@Override
-	@SideOnly(Side.CLIENT)
-	protected void setCloudRenderer() {
-		if (super.getCloudRenderer() == null)
-        this.setCloudRenderer(new CloudsHollows());
-		//non functional
-    }
+//	//@Override
+//	@SideOnly(Side.CLIENT)
+//	protected void setCloudRenderer() {
+//		if (super.getCloudRenderer() == null)
+//        this.setCloudRenderer(new CloudsHollows());
+//		//non functional
+//    }
     @Override
     public boolean canRainOrSnow() {
         return true;
@@ -187,9 +187,8 @@ public class WorldProviderHollows extends WorldProviderSpace implements ISolarLe
 
     @Override
     public DimensionType getDimensionType() {
-        return CFdimensions.hollowsDIM;
+        return micdoodle8.mods.galacticraft.core.util.WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.hollowsID);
     }
-
     @Override
     public int getDungeonSpacing() {
         return 0;
