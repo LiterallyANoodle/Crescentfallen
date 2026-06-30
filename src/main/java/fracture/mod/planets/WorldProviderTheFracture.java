@@ -203,7 +203,7 @@ public class WorldProviderTheFracture extends WorldProviderSpace implements IGal
 
 	@Override
 	public DimensionType getDimensionType() {
-		return CFdimensions.fractureDIM;
+	    return micdoodle8.mods.galacticraft.core.util.WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.fractureID);
 	}
 
 	@Override

@@ -9,8 +9,7 @@ import net.minecraftforge.common.config.Configuration;
 public class ConfigHandler 
 {
 	public static Configuration config; 
-	
-	
+	public static boolean enableDestructionEvent = true;
 	
 	public static void init(File file)
 	{

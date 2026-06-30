@@ -1,0 +1,207 @@
+package fracture.mod.planets;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import fracture.mod.CFConfig;
+import fracture.mod.init.BlockInit;
+import fracture.mod.init.CFplanets;
+import fracture.mod.planets.moons.kona.SkyProviderKona;
+import fracture.mod.planets.moons.kona.biome.BiomeProviderKona;
+import micdoodle8.mods.galacticraft.api.galaxies.CelestialBody;
+import micdoodle8.mods.galacticraft.api.prefab.world.gen.BiomeAdaptive;
+import micdoodle8.mods.galacticraft.api.prefab.world.gen.WorldProviderSpace;
+import micdoodle8.mods.galacticraft.api.vector.Vector3;
+import micdoodle8.mods.galacticraft.api.world.IGalacticraftWorldProvider;
+import micdoodle8.mods.galacticraft.api.world.ISolarLevel;
+import micdoodle8.mods.galacticraft.core.util.WorldUtil;
+import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.DimensionType;
+import net.minecraft.world.biome.BiomeProvider;
+import net.minecraft.world.gen.IChunkGenerator;
+import net.minecraftforge.client.IRenderHandler;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import fracture.mod.planets.moons.kona.ChunkProviderKona;
+
+
+public class WorldProviderKona extends WorldProviderSpace implements IGalacticraftWorldProvider, ISolarLevel {
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public IRenderHandler getSkyRenderer() {
+        if (super.getSkyRenderer() == null) {
+            this.renderSky();
+        }
+        return super.getSkyRenderer();
+    }
+
+    protected void renderSky() {
+        this.setSkyRenderer(new SkyProviderKona(this));
+    }
+
+    @Override
+    public IRenderHandler getCloudRenderer() {
+        return null; 
+    }
+
+    @Override
+    public float getCloudHeight() {
+        return -1000.0F; 
+    }
+
+    @Override
+    public Vector3 getFogColor() {
+        return new Vector3(0.0, 0.0, 0.0);
+    }
+
+    @Override
+    public Vector3 getSkyColor() {
+        return new Vector3(0.0, 0.0, 0.0); 
+    }
+
+    @Override
+    public boolean canRainOrSnow() {
+        return false;
+    }
+
+    @Override
+    public boolean hasSunset() {
+        return false;
+    }
+
+    @Override
+    public long getDayLength() {
+        return 24000L;
+    }
+
+    @Override
+    public boolean shouldForceRespawn() {
+        return true;
+    }
+
+    @Override
+    public Class<? extends IChunkGenerator> getChunkProviderClass() {
+        return ChunkProviderKona.class;
+    }
+
+    @Override
+    public Class<? extends BiomeProvider> getBiomeProviderClass() {
+        //BiomeAdaptive.setBodyMultiBiome(CFplanets.kona);
+        return BiomeProviderKona.class;
+    }
+
+    @Override
+    public int getAverageGroundLevel() {
+        return 63;
+    }
+
+    @Override
+    public boolean canCoordinateBeSpawn(int x, int z) {
+        return true;
+    }
+
+    @Override
+    public float getGravity() {
+        return 0.000F; 
+    }
+
+    @Override
+    public int getHeight() {
+        return 800;
+    }
+
+    @Override
+    public double getMeteorFrequency() {
+        return 7.0D;
+    }
+
+    @Override
+    public double getFuelUsageMultiplier() {
+        return 1.0D;
+    }
+
+    @Override
+    public boolean canSpaceshipTierPass(int tier) {
+        return tier >= CFConfig.CF_planet_settings.konaTier;
+    }
+
+    @Override
+    public float getFallDamageModifier() {
+        return 0.18F;
+    }
+
+    @Override
+    public float getSoundVolReductionAmount() {
+        return 10.0F;
+    }
+
+    @Override
+    public CelestialBody getCelestialBody() {
+        return CFplanets.kona;
+    }
+
+    @Override
+    public boolean hasBreathableAtmosphere() {
+        return false; 
+    }
+
+    @Override
+    public float getThermalLevelModifier() {
+        return -1.0F; 
+    }
+
+    @Override
+    public float getWindLevel() {
+        return 0.0F;
+    }
+
+    @Override
+    public double getSolarEnergyMultiplier() {
+        return 1.4F;
+    }
+
+    @Override
+    public boolean shouldDisablePrecipitation() {
+        return true;
+    }
+
+    @Override
+    public boolean shouldCorrodeArmor() {
+        return false;
+    }
+
+    @Override
+    public DimensionType getDimensionType() {
+        return WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.konaID);
+    }
+
+    @Override
+    public boolean isDaytime() {
+        final float a = this.world.getCelestialAngle(0F);
+        return a < 0.42F || a > 0.58F;
+    }
+
+    @Override
+    public int getDungeonSpacing() {
+        return 0;
+    }
+
+    @Override
+    public ResourceLocation getDungeonChestType() {
+        return null;
+    }
+
+    @Override
+    public List<Block> getSurfaceBlocks() {
+        List<Block> list = new LinkedList<>();
+        list.add(BlockInit.SURFACE_KONA);
+        list.add(BlockInit.STONE_SUBSURFACE_KONA);
+        list.add(BlockInit.STONE_KONA);
+        list.add(BlockInit.TRASH_PILE);
+        list.add(Blocks.GRAVEL);
+        return list;
+    }
+}

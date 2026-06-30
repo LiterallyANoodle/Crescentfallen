@@ -2,7 +2,6 @@ package fracture.mod.world.epchanges.callisto;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.lang.reflect.Field;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -13,7 +12,6 @@ import net.minecraft.world.gen.layer.GenLayerSmooth;
 import net.minecraft.world.gen.layer.GenLayerVoronoiZoom;
 import net.minecraft.world.gen.layer.GenLayerZoom;
 import net.minecraft.world.gen.layer.IntCache;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 public class CfCallistoBiomeProvider extends BiomeProvider {
@@ -23,10 +21,14 @@ public class CfCallistoBiomeProvider extends BiomeProvider {
             CFEPBiomeInit.CALLISTO_OIL_SHALE,
             CFEPBiomeInit.CALLISTO_ROCKIES,
             CFEPBiomeInit.CALLISTO_GRAVEL_BED,
-            // Transition biomes(WIP)
             CFEPBiomeInit.CALLISTO_FOOTHILLS, 
             CFEPBiomeInit.CALLISTO_SANDS      
         );
+
+    // Pseudo-IDs to avoid Forge registry conflicts during generation
+    private static final int MASSIVE_SHALE_ID = 10200;
+    private static final int LARGE_SHALE_ID = 10201;
+    private static final int LARGE_ROCKIES_ID = 10202;
 
     public CfCallistoBiomeProvider(World world) {
         super(world.getWorldInfo()); 
@@ -42,16 +44,13 @@ public class CfCallistoBiomeProvider extends BiomeProvider {
             genBiomesField.set(this, layers[0]);
             biomeIndexField.set(this, layers[1]);
             
-            System.out.println("[Fracture] Callisto BiomeProvider: Injected custom layers.");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public List<Biome> getBiomesToSpawnIn() {
-        return CALLISTO_BIOMES;
-    }
+    public List<Biome> getBiomesToSpawnIn() { return CALLISTO_BIOMES; }
 
     @Override
     public boolean areBiomesViable(int x, int z, int radius, List<Biome> allowed) {
@@ -64,62 +63,153 @@ public class CfCallistoBiomeProvider extends BiomeProvider {
     private static GenLayer[] makeCustomLayers(long seed) {
         GenLayer biomes = new GenLayerCallistoLand(1L);
         
-        // Edge/Transition layer to insert Foothills
-        biomes = new GenLayerCallistoEdge(1000L, biomes);
+        biomes = new GenLayerCallistoGrow(1000L, biomes);
+        biomes = new GenLayerCallistoGrow(1001L, biomes);
 
         biomes = new GenLayerFuzzyZoom(2000L, biomes);
-        biomes = new GenLayerFuzzyZoom(2001L, biomes);
-        
-        biomes = new GenLayerZoom(1000L, biomes);
-        biomes = new GenLayerSmooth(1000L, biomes);
-        
-        biomes = new GenLayerZoom(1001L, biomes);
-        biomes = new GenLayerSmooth(1001L, biomes);
-        
-        biomes = new GenLayerZoom(1002L, biomes);
-        biomes = new GenLayerZoom(1003L, biomes);
-        biomes = new GenLayerSmooth(1002L, biomes);
-        
-        biomes = new GenLayerZoom(1004L, biomes);
-        biomes = new GenLayerZoom(1005L, biomes);
-        biomes = new GenLayerSmooth(1003L, biomes);
+        biomes = new GenLayerZoom(2001L, biomes);
 
-        GenLayer voronoi = new GenLayerVoronoiZoom(1L, biomes);
+        biomes = new GenLayerCallistoSubBiomes(1002L, biomes);
+
+        biomes = new GenLayerZoom(2002L, biomes);
+
+        biomes = new GenLayerCallistoEdge(1000L, biomes);
+
+        biomes = new GenLayerCallistoResolve(1003L, biomes);
+
+
+        GenLayer canyons = new GenLayerCallistoCanyonsInit(100L);
+        canyons = new GenLayerZoom(1000L, canyons);
+        canyons = new GenLayerZoom(1001L, canyons);
+        canyons = new GenLayerZoom(1002L, canyons); 
+        canyons = new GenLayerCallistoCanyons(1003L, canyons); 
+
+        biomes = new GenLayerCallistoCanyonMix(100L, biomes, canyons);
+
+        biomes = new GenLayerZoom(2003L, biomes);
+        biomes = new GenLayerZoom(2004L, biomes);
+        biomes = new GenLayerZoom(2005L, biomes);
+        
+        biomes = new GenLayerSmooth(1002L, biomes);
+        GenLayer voronoi = new GenLayerVoronoiZoom(10L, biomes);
+
         biomes.initWorldGenSeed(seed);
         voronoi.initWorldGenSeed(seed);
         return new GenLayer[] { biomes, voronoi };
     }
 
 
-     //Edge Layer to insert Foothills between Rockies and lower biomes(WIP)
+    static class GenLayerCallistoLand extends GenLayer {
+        public GenLayerCallistoLand(long seed) { super(seed); }
+        @Override
+        public int[] getInts(int x, int z, int width, int height) {
+            int[] dest = IntCache.getIntCache(width * height);
+            int oilShale = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_OIL_SHALE);
+            int blackDesert = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_BLACK_DESERT);
+            int rockies = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_ROCKIES);
 
-    static class GenLayerCallistoEdge extends GenLayer {
-        public GenLayerCallistoEdge(long seed, GenLayer parent) {
-            super(seed);
-            this.parent = parent;
+            for (int dz = 0; dz < height; ++dz) {
+                for (int dx = 0; dx < width; ++dx) {
+                    this.initChunkSeed(x + dx, z + dz);
+                    int r = this.nextInt(100); 
+                    
+                    if (r < 5) dest[dx + dz * width] = LARGE_ROCKIES_ID;       // 5% Large Rockies
+                    else if (r < 15) dest[dx + dz * width] = rockies;          // 10% Rockies
+                    else if (r < 20) dest[dx + dz * width] = MASSIVE_SHALE_ID; // 5% Large Shale
+                    else if (r < 35) dest[dx + dz * width] = LARGE_SHALE_ID;   // 15% Large Shale
+                    else if (r < 60) dest[dx + dz * width] = oilShale;         // 25% Shale
+                    else dest[dx + dz * width] = blackDesert;                  // 40% Black Desert
+                }
+            }
+            return dest;
         }
+    }
 
+    // Forces large designated biomes to aggressively overwrite their neighbors
+    static class GenLayerCallistoGrow extends GenLayer {
+        public GenLayerCallistoGrow(long seed, GenLayer parent) { super(seed); this.parent = parent; }
         @Override
         public int[] getInts(int x, int z, int width, int height) {
             int[] parentInts = this.parent.getInts(x - 1, z - 1, width + 2, height + 2);
             int[] dest = IntCache.getIntCache(width * height);
+            for (int dz = 0; dz < height; ++dz) {
+                for (int dx = 0; dx < width; ++dx) {
+                    this.initChunkSeed(x + dx, z + dz);
+                    int center = parentInts[dx + 1 + (dz + 1) * (width + 2)];
+                    int up = parentInts[dx + 1 + dz * (width + 2)];
+                    int down = parentInts[dx + 1 + (dz + 2) * (width + 2)];
+                    int left = parentInts[dx + (dz + 1) * (width + 2)];
+                    int right = parentInts[dx + 2 + (dz + 1) * (width + 2)];
 
+                    dest[dx + dz * width] = center;
+                    
+                    //add spread chance (z66%)
+                    if (center != MASSIVE_SHALE_ID && (up == MASSIVE_SHALE_ID || down == MASSIVE_SHALE_ID || left == MASSIVE_SHALE_ID || right == MASSIVE_SHALE_ID)) {
+                        if (this.nextInt(3) != 0) dest[dx + dz * width] = MASSIVE_SHALE_ID; 
+                    }
+                    else if (center != LARGE_SHALE_ID && center != LARGE_ROCKIES_ID) {
+                         if ((up == LARGE_SHALE_ID || down == LARGE_SHALE_ID || left == LARGE_SHALE_ID || right == LARGE_SHALE_ID) && this.nextInt(2) == 0) dest[dx + dz * width] = LARGE_SHALE_ID;
+                         else if ((up == LARGE_ROCKIES_ID || down == LARGE_ROCKIES_ID || left == LARGE_ROCKIES_ID || right == LARGE_ROCKIES_ID) && this.nextInt(2) == 0) dest[dx + dz * width] = LARGE_ROCKIES_ID;
+                    }
+                }
+            }
+            return dest;
+        }
+    }
+
+    // Injects Black Desert inside shale areas
+    static class GenLayerCallistoSubBiomes extends GenLayer {
+        public GenLayerCallistoSubBiomes(long seed, GenLayer parent) { super(seed); this.parent = parent; }
+        @Override
+        public int[] getInts(int x, int z, int width, int height) {
+            int[] parentInts = this.parent.getInts(x - 1, z - 1, width + 2, height + 2);
+            int[] dest = IntCache.getIntCache(width * height);
+            int blackDesert = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_BLACK_DESERT);
+            
+            for (int dz = 0; dz < height; ++dz) {
+                for (int dx = 0; dx < width; ++dx) {
+                    this.initChunkSeed(x + dx, z + dz);
+                    int center = parentInts[dx + 1 + (dz + 1) * (width + 2)];
+                    int up = parentInts[dx + 1 + dz * (width + 2)];
+                    int down = parentInts[dx + 1 + (dz + 2) * (width + 2)];
+                    int left = parentInts[dx + (dz + 1) * (width + 2)];
+                    int right = parentInts[dx + 2 + (dz + 1) * (width + 2)];
+                    
+                    if (center == MASSIVE_SHALE_ID && up == MASSIVE_SHALE_ID && down == MASSIVE_SHALE_ID && left == MASSIVE_SHALE_ID && right == MASSIVE_SHALE_ID) {
+                        if (this.nextInt(10) == 0) dest[dx + dz * width] = blackDesert;
+                        else dest[dx + dz * width] = center;
+                    } else {
+                        dest[dx + dz * width] = center;
+                    }
+                }
+            }
+            return dest;
+        }
+    }
+
+    // Wrap Foothills around both normal and large Rockies
+    static class GenLayerCallistoEdge extends GenLayer {
+        public GenLayerCallistoEdge(long seed, GenLayer parent) { super(seed); this.parent = parent; }
+        @Override
+        public int[] getInts(int x, int z, int width, int height) {
+            int[] parentInts = this.parent.getInts(x - 1, z - 1, width + 2, height + 2);
+            int[] dest = IntCache.getIntCache(width * height);
             int rockies = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_ROCKIES);
             int foothills = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_FOOTHILLS);
 
             for (int dz = 0; dz < height; ++dz) {
                 for (int dx = 0; dx < width; ++dx) {
-                    this.initChunkSeed(x + dx, z + dz);
                     int center = parentInts[dx + 1 + (dz + 1) * (width + 2)];
-
-                    if (center == rockies) {
+                    if (center == rockies || center == LARGE_ROCKIES_ID) {
                         int up = parentInts[dx + 1 + dz * (width + 2)];
                         int down = parentInts[dx + 1 + (dz + 2) * (width + 2)];
                         int left = parentInts[dx + (dz + 1) * (width + 2)];
                         int right = parentInts[dx + 2 + (dz + 1) * (width + 2)];
 
-                        // If any neighbor is NOT rockies, turn this edge into Foothills
-                        if (up != rockies || down != rockies || left != rockies || right != rockies) {
+                        if ((up != rockies && up != LARGE_ROCKIES_ID) || 
+                            (down != rockies && down != LARGE_ROCKIES_ID) || 
+                            (left != rockies && left != LARGE_ROCKIES_ID) || 
+                            (right != rockies && right != LARGE_ROCKIES_ID)) {
                             dest[dx + dz * width] = foothills;
                         } else {
                             dest[dx + dz * width] = center;
@@ -133,29 +223,87 @@ public class CfCallistoBiomeProvider extends BiomeProvider {
         }
     }
 
-    static class GenLayerCallistoLand extends GenLayer {
-        public GenLayerCallistoLand(long seed) { super(seed); }
+    // Converts Pseudo-IDs back to legitimate biomes
+    static class GenLayerCallistoResolve extends GenLayer {
+        public GenLayerCallistoResolve(long seed, GenLayer parent) { super(seed); this.parent = parent; }
         @Override
-        public int[] getInts(int areaX, int areaY, int areaWidth, int areaHeight) {
-            int[] dest = IntCache.getIntCache(areaWidth * areaHeight);
+        public int[] getInts(int x, int z, int width, int height) {
+            int[] parentInts = this.parent.getInts(x, z, width, height);
+            int[] dest = IntCache.getIntCache(width * height);
             int oilShale = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_OIL_SHALE);
-            int blackDesert = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_BLACK_DESERT);
             int rockies = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_ROCKIES);
-            int gravel = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_GRAVEL_BED);
 
-            for (int dz = 0; dz < areaHeight; ++dz) {
-                for (int dx = 0; dx < areaWidth; ++dx) {
-                    this.initChunkSeed((long)(areaX + dx), (long)(areaY + dz));
-                    int r = this.nextInt(30); 
-                    
-                    int biomeID;
-                    if (r == 0) biomeID = rockies;
-                    else if (r == 1) biomeID = gravel;
-                    else if (r <= 10) biomeID = blackDesert;
-                    else biomeID = oilShale;
+            for (int i = 0; i < width * height; ++i) {
+                int id = parentInts[i];
+                if (id == MASSIVE_SHALE_ID || id == LARGE_SHALE_ID) dest[i] = oilShale;
+                else if (id == LARGE_ROCKIES_ID) dest[i] = rockies;
+                else dest[i] = id;
+            }
+            return dest;
+        }
+    }
 
-                    dest[dx + dz * areaWidth] = biomeID;
+    // apl canyon noise
+    static class GenLayerCallistoCanyonsInit extends GenLayer {
+        public GenLayerCallistoCanyonsInit(long seed) { super(seed); }
+        @Override
+        public int[] getInts(int x, int z, int width, int height) {
+            int[] dest = IntCache.getIntCache(width * height);
+            for (int dz = 0; dz < height; ++dz) {
+                for (int dx = 0; dx < width; ++dx) {
+                    this.initChunkSeed(x + dx, z + dz);
+                    dest[dx + dz * width] = this.nextInt(2) + 2; 
                 }
+            }
+            return dest;
+        }
+    }
+
+    // detect edges to draw canyons
+    static class GenLayerCallistoCanyons extends GenLayer {
+        public GenLayerCallistoCanyons(long seed, GenLayer parent) { super(seed); this.parent = parent; }
+        @Override
+        public int[] getInts(int x, int z, int width, int height) {
+            int[] parentInts = this.parent.getInts(x - 1, z - 1, width + 2, height + 2);
+            int[] dest = IntCache.getIntCache(width * height);
+            int gravelBed = Biome.getIdForBiome(CFEPBiomeInit.CALLISTO_GRAVEL_BED);
+
+            for (int dz = 0; dz < height; ++dz) {
+                for (int dx = 0; dx < width; ++dx) {
+                    int center = parentInts[dx + 1 + (dz + 1) * (width + 2)];
+                    int up = parentInts[dx + 1 + dz * (width + 2)];
+                    int down = parentInts[dx + 1 + (dz + 2) * (width + 2)];
+                    int left = parentInts[dx + (dz + 1) * (width + 2)];
+                    int right = parentInts[dx + 2 + (dz + 1) * (width + 2)];
+
+                    if (center == up && center == down && center == left && center == right) {
+                        dest[dx + dz * width] = -1;
+                    } else {
+                        dest[dx + dz * width] = gravelBed; 
+                    }
+                }
+            }
+            return dest;
+        }
+    }
+
+    // Overlay canyons onto the landmasses
+    static class GenLayerCallistoCanyonMix extends GenLayer {
+        private final GenLayer canyonLayer;
+        public GenLayerCallistoCanyonMix(long seed, GenLayer biomeLayer, GenLayer canyonLayer) {
+            super(seed);
+            this.parent = biomeLayer;
+            this.canyonLayer = canyonLayer;
+        }
+        @Override
+        public int[] getInts(int x, int z, int width, int height) {
+            int[] biomes = this.parent.getInts(x, z, width, height);
+            int[] canyons = this.canyonLayer.getInts(x, z, width, height);
+            int[] dest = IntCache.getIntCache(width * height);
+
+            for (int i = 0; i < width * height; ++i) {
+                if (canyons[i] > 0) dest[i] = canyons[i];
+                else dest[i] = biomes[i];
             }
             return dest;
         }

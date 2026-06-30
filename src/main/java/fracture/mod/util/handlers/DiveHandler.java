@@ -3,12 +3,19 @@ package fracture.mod.util.handlers;
 import fracture.mod.CFInfo;
 import fracture.mod.CFMain;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.SoundEvents;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -21,9 +28,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import java.lang.reflect.Method;
 
 @Mod.EventBusSubscriber(modid = CFInfo.ID)
-
-// THIS IS A SEPRATE VERION, A TESTING VERSION FOR CLIENT SIDE SYNCRONIZATION. IT IS A WORK IN PROGRESS
-
 public class DiveHandler {
 
     private static final double DASH_STRENGTH = 1.1D;
@@ -33,7 +37,8 @@ public class DiveHandler {
 
     private static final float SLIDE_START_SPEED = 1.2F;
     private static final float SLIDE_DECAY_RATE = 0.04F;
-    private static final float SLIDE_HITBOX_HEIGHT = 0.6F;
+    private static final float SLIDE_HITBOX_HEIGHT = 0.5F;
+    private static final float CROUCH_HITBOX_HEIGHT = 0.9F;  
     private static final float NORMAL_HITBOX_HEIGHT = 1.8F;
 
     private static Method setSizeMethod;
@@ -47,11 +52,9 @@ public class DiveHandler {
     }
 
     public enum DiveState {
-        NONE, DIVING, SLIDING
+        NONE, DIVING, SLIDING, CROUCHING
     }
 
-
-    // Protects the local player from Server NBT overwrites during lag.
     @SideOnly(Side.CLIENT)
     public static class ClientPhysics {
         public static DiveState state = DiveState.NONE;
@@ -66,12 +69,11 @@ public class DiveHandler {
     @SideOnly(Side.CLIENT)
     public static boolean performClientDive(EntityPlayerSP player, float forward, float strafe) {
         if (ClientPhysics.cooldown > 0) return false;
-
         if (!ClientPhysics.canDive && !player.onGround && !player.isInWater() && !player.isInLava()) return false;
 
         player.world.playSound(player.posX, player.posY, player.posZ,
-                net.minecraft.init.SoundEvents.ENTITY_ENDERDRAGON_FLAP,
-                net.minecraft.util.SoundCategory.PLAYERS, 0.3F, 1.0F, false);
+                SoundEvents.ENTITY_ENDERDRAGON_FLAP,
+                SoundCategory.PLAYERS, 0.3F, 1.0F, false);
 
         if (forward != 0 || strafe != 0) {
             float yaw = player.rotationYaw;
@@ -87,22 +89,18 @@ public class DiveHandler {
             ClientPhysics.lastDiveDirZ = moveVec.z;
         }
 
-        // Set LOCAL state
         ClientPhysics.cooldown = COOLDOWN_TICKS;
         ClientPhysics.canDive = false;
         ClientPhysics.state = DiveState.DIVING;
         
         player.getEntityData().setInteger("diveCooldown", COOLDOWN_TICKS);
-        
         updatePlayerSize(player, 0.6F, SLIDE_HITBOX_HEIGHT);
         return true;
     }
 
     public static void performServerDiveStats(EntityPlayerMP player) {
         player.getEntityData().setInteger("diveCooldown", COOLDOWN_TICKS);
-        player.getFoodStats().setFoodSaturationLevel(
-                Math.max(0, player.getFoodStats().getSaturationLevel() - SATURATION_DRAIN)
-        );
+        player.getFoodStats().setFoodSaturationLevel(Math.max(0, player.getFoodStats().getSaturationLevel() - SATURATION_DRAIN));
         player.getEntityData().setBoolean("canDive", false);
         int diveCount = player.getEntityData().getInteger("diveCount");
         player.getEntityData().setInteger("diveCount", diveCount + 1);
@@ -122,51 +120,78 @@ public class DiveHandler {
             
             if (player.onGround || player.isInWater() || player.isInLava()) {
                 ClientPhysics.canDive = true;
+                ClientPhysics.cooldown = 0; 
+            }
+
+            // CROUCH & SPRINT-SLIDE TRANSITION ATTEMPT
+            if (ClientPhysics.state == DiveState.NONE && player.onGround) {
+                if (KeybindHandler.crouchKey.isKeyDown()) {
+                    if (player.isSprinting()) {
+                        double speedX = player.motionX;
+                        double speedZ = player.motionZ;
+                        double totalSpeed = Math.sqrt(speedX * speedX + speedZ * speedZ);
+
+                        if (totalSpeed > 0.05D) {
+                            ClientPhysics.slideDirX = speedX / totalSpeed;
+                            ClientPhysics.slideDirZ = speedZ / totalSpeed;
+                        } else {
+                            float yaw = player.rotationYaw;
+                            ClientPhysics.slideDirX = -Math.sin(Math.toRadians(yaw));
+                            ClientPhysics.slideDirZ = Math.cos(Math.toRadians(yaw));
+                        }
+
+                        ClientPhysics.slideSpeed = SLIDE_START_SPEED;
+                        ClientPhysics.defaultStepHeight = player.stepHeight;
+                        player.stepHeight = 1.25F; 
+                        ClientPhysics.state = DiveState.SLIDING;
+                        
+                    } else {
+                        ClientPhysics.state = DiveState.CROUCHING;
+                    }
+                }
             }
         } else {
-        	// Handle other players
             int cd = player.getEntityData().getInteger("diveCooldown");
             if (cd > 0) player.getEntityData().setInteger("diveCooldown", cd - 1);
+            
             if (player.onGround || player.isInWater() || player.isInLava()) {
                 player.getEntityData().setBoolean("canDive", true);
+                player.getEntityData().setInteger("diveCooldown", 0);
             }
         }
 
-        // Use local state for the client player, but NBT for everyone else
         DiveState state = isLocalPlayer ? ClientPhysics.state : getState(player);
 
+        // DIVING STATE
         if (state == DiveState.DIVING) {
             updatePlayerSize(player, 0.6F, SLIDE_HITBOX_HEIGHT);
-
             if (isLocalPlayer) {
                 if (!player.onGround && (Math.abs(player.motionX) > 0.01 || Math.abs(player.motionZ) > 0.01)) {
                      Vec3d currentMotion = new Vec3d(player.motionX, 0, player.motionZ).normalize();
                      ClientPhysics.lastDiveDirX = currentMotion.x;
                      ClientPhysics.lastDiveDirZ = currentMotion.z;
                 }
-
                 if (player.onGround) {
-                    double dx = player.posX - player.prevPosX;
-                    double dz = player.posZ - player.prevPosZ;
-                    Vec3d slideDir = new Vec3d(dx, 0, dz);
-
-                    if (slideDir.lengthSquared() < 1.0E-4D) {
-                        if (Math.abs(ClientPhysics.lastDiveDirX) > 0.01 || Math.abs(ClientPhysics.lastDiveDirZ) > 0.01) {
-                             slideDir = new Vec3d(ClientPhysics.lastDiveDirX, 0, ClientPhysics.lastDiveDirZ);
-                        } else {
+                    Vec3d slideDir = Vec3d.ZERO;
+                    if (Math.abs(ClientPhysics.lastDiveDirX) > 0.01 || Math.abs(ClientPhysics.lastDiveDirZ) > 0.01) {
+                        slideDir = new Vec3d(ClientPhysics.lastDiveDirX, 0, ClientPhysics.lastDiveDirZ);
+                    } else {
+                        double dx = player.posX - player.prevPosX;
+                        double dz = player.posZ - player.prevPosZ;
+                        slideDir = new Vec3d(dx, 0, dz);
+                        if (slideDir.lengthSquared() < 1.0E-4D) {
                             float yaw = player.rotationYaw;
                             slideDir = new Vec3d(-Math.sin(Math.toRadians(yaw)), 0, Math.cos(Math.toRadians(yaw)));
                         }
                     }
+                    
                     slideDir = slideDir.normalize();
                     ClientPhysics.slideDirX = slideDir.x;
                     ClientPhysics.slideDirZ = slideDir.z;
                     ClientPhysics.slideSpeed = SLIDE_START_SPEED;
                     
-                    // Store base step height and boost it for incline sliding
                     ClientPhysics.defaultStepHeight = player.stepHeight;
                     player.stepHeight = 1.25F; 
-
                     ClientPhysics.state = DiveState.SLIDING;
                 }
             } else {
@@ -174,7 +199,7 @@ public class DiveHandler {
             }
         }
 
-        // SLIDING
+        // SLIDING STATE
         if (state == DiveState.SLIDING) {
             updatePlayerSize(player, 0.6F, SLIDE_HITBOX_HEIGHT);
 
@@ -185,22 +210,57 @@ public class DiveHandler {
 
             if (isLocalPlayer) {
                 if (ClientPhysics.slideSpeed <= 0 || player.collidedHorizontally) {
-                    stopSliding(player);
-                    CFMain.NETWORK.sendToServer(new SlideCancelPacket()); 
+                    if (KeybindHandler.crouchKey.isKeyDown()) {
+                        ClientPhysics.state = DiveState.CROUCHING;
+                        player.stepHeight = ClientPhysics.defaultStepHeight;
+                    } else {
+                        stopSliding(player);
+                        CFMain.NETWORK.sendToServer(new SlideCancelPacket()); 
+                    }
                     return;
                 }
 
                 player.motionX = ClientPhysics.slideDirX * ClientPhysics.slideSpeed;
                 player.motionZ = ClientPhysics.slideDirZ * ClientPhysics.slideSpeed;
-                
                 ClientPhysics.slideSpeed -= SLIDE_DECAY_RATE;
             }
 
-            // Server handles particles for other clients to see
             if (!player.world.isRemote && player.ticksExisted % 2 == 0) {
                 spawnSlideParticles(player);
             }
         }
+
+        // CROUCHING STATE HANDLING
+        if (state == DiveState.CROUCHING) {
+            updatePlayerSize(player, 0.6F, CROUCH_HITBOX_HEIGHT);
+
+            if (isLocalPlayer) {
+                EntityPlayerSP localPlayer = (EntityPlayerSP) player;
+                localPlayer.movementInput.moveForward *= 0.5F;
+                localPlayer.movementInput.moveStrafe *= 0.5F;
+
+                if (!KeybindHandler.crouchKey.isKeyDown() && canUncrouch(player)) {
+                    ClientPhysics.state = DiveState.NONE;
+                    updatePlayerSize(player, 0.6F, NORMAL_HITBOX_HEIGHT);
+                }
+            }
+        }
+    }
+
+    /**
+     * Confirms whether a player has enough spatial block clearance directly above them to stand up. Not working currently.
+     */
+    private static boolean canUncrouch(EntityPlayer player) {
+        AxisAlignedBB box = player.getEntityBoundingBox();
+        AxisAlignedBB standingBox = new AxisAlignedBB(
+            box.minX, 
+            box.minY, 
+            box.minZ, 
+            box.maxX, 
+            box.minY + NORMAL_HITBOX_HEIGHT, 
+            box.maxZ
+        );
+        return player.world.getCollisionBoxes(player, standingBox).isEmpty();
     }
 
     public static void stopSliding(EntityPlayer player) {
@@ -208,12 +268,12 @@ public class DiveHandler {
             player.motionX = 0;
             player.motionZ = 0;
             ClientPhysics.state = DiveState.NONE;
-            // Reset Step Height back to normal
+            ClientPhysics.lastDiveDirX = 0;
+            ClientPhysics.lastDiveDirZ = 0;
             player.stepHeight = ClientPhysics.defaultStepHeight;
         } else {
             setState(player, DiveState.NONE);
         }
-        
         updatePlayerSize(player, 0.6F, NORMAL_HITBOX_HEIGHT);
         player.getEntityData().setInteger("diveCount", 0);
     }
@@ -228,12 +288,22 @@ public class DiveHandler {
     private static void spawnSlideParticles(EntityPlayer player) {
         if (player.world instanceof WorldServer) {
             WorldServer worldServer = (WorldServer) player.world;
-            worldServer.spawnParticle(
-                EnumParticleTypes.BLOCK_DUST,
-                player.posX, player.posY + 0.1, player.posZ, 
-                3, 0.2, 0.0, 0.2, 0.05, 
-                Block.getStateId(Blocks.DIRT.getDefaultState())
-            );
+            
+            int x = MathHelper.floor(player.posX);
+            int y = MathHelper.floor(player.getEntityBoundingBox().minY - 0.2D);
+            int z = MathHelper.floor(player.posZ);
+            BlockPos pos = new BlockPos(x, y, z);
+            
+            IBlockState state = worldServer.getBlockState(pos);
+            
+            if (state.getRenderType() != EnumBlockRenderType.INVISIBLE) {
+                worldServer.spawnParticle(
+                    EnumParticleTypes.BLOCK_DUST,
+                    player.posX, player.posY + 0.1, player.posZ, 
+                    3, 0.2, 0.0, 0.2, 0.05, 
+                    Block.getStateId(state)
+                );
+            }
         }
     }
 

@@ -1,11 +1,20 @@
 package fracture.mod;
 
-import fracture.mod.client.sky.AsteroidSkyHandler;
+import fracture.mod.client.event.GalaxyMapEventHandler;
+//import fracture.mod.client.sky.AsteroidSkyHandler;
+//import fracture.mod.client.sky.DestructionSkyHandler;
+import fracture.mod.client.vhandlers.CameraShakeHandler;
+import fracture.mod.client.vhandlers.PacketContinuousShake;
+import fracture.mod.client.vhandlers.PacketScreenShake;
+import fracture.mod.commands.CommandCF;
+//import fracture.mod.commands.CommandCFExplode;
 //import fracture.mod.client.render.HidePressureOverlay;
 //import fracture.mod.AddonConfig.Dimension;
 import fracture.mod.init.CFdimensions;
 import fracture.mod.init.CFplanets;
 import fracture.mod.init.CFsolarsystems;
+import fracture.mod.network.PacketSpawnExplosionParticles;
+//import fracture.mod.network.PacketSyncTimer;
 import fracture.mod.planets.WorldProviderDreamyard;
 import fracture.mod.planets.WorldProviderHollows;
 import fracture.mod.planets.WorldProviderTheFracture;
@@ -16,18 +25,23 @@ import fracture.mod.tabs.CrescentfallenGunstab;
 import fracture.mod.tabs.CrescentfallenTabitems;
 import fracture.mod.util.Reference;
 import fracture.mod.util.handlers.CameraTiltHandler;
+import fracture.mod.util.handlers.CommonEventHandler;
 import fracture.mod.util.handlers.ConfigHandler;
 import fracture.mod.util.handlers.DiveHandler;
 import fracture.mod.util.handlers.DivePacket;
 import fracture.mod.util.handlers.FlowerSpawnHandler;
+import fracture.mod.util.handlers.HudOverlayHandler;
 import fracture.mod.util.handlers.KeybindHandler;
 import fracture.mod.util.handlers.PlayerMovementHandler;
 import fracture.mod.util.handlers.SlideCancelPacket;
+import fracture.mod.util.handlers.SlideClientHandler;
+import fracture.mod.world.epchanges.CFWorldGenRegistry;
 import fracture.mod.world.epchanges.CfEuropaChunkgen;
 import fracture.mod.world.epchanges.CfIoChunkgen;
 import fracture.mod.world.epchanges.CfOberonChunkgen;
+//import fracture.mod.world.epchanges.GanymedeInjector;
 import fracture.mod.world.epchanges.callisto.CFEPBiomeInit;
-import fracture.mod.world.epchanges.callisto.CfCallistoBiomeAddon;
+//import fracture.mod.world.epchanges.callisto.CfCallistoBiomeAddon;
 //import fracture.mod.world.epchanges.callisto.CfCallistoBiomeTweaker;
 //import fracture.mod.world.epchanges.callisto.CfCallistoFaultGen;
 import fracture.mod.world.epchanges.callisto.CfCallistoPyramidGen;
@@ -46,6 +60,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLInterModComms.IMCEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
@@ -70,6 +85,8 @@ public class CFMain {
 	
 	//I think most of the bloat here can be condensed and organized using the mod proxies? but this is the testing branch 
 	//and will be fixed later. note this down.
+	
+	// Note: Update mcmod.info dependencies and build.gradle identifiers
 	
 	
 	//MOVEMENT SYSTEM TESTING
@@ -102,10 +119,10 @@ public class CFMain {
 	        }
 	    
 		// Call this in the preInit (make sure you register any blocks or items first)
-		CFdimensions.init();
+		//CFdimensions.init();
 
-		new CFsolarsystems();
-		new CFplanets();
+		//new CFsolarsystems();
+		//new CFplanets();
 		// AddonPlanets.this.registerPlanets();
 		//public static final int dreamyardDIM = ConfigManagerCore. 1010;
 		
@@ -120,9 +137,11 @@ public class CFMain {
 	    MinecraftForge.EVENT_BUS.register(new CfIoChunkgen());	    
 	    MinecraftForge.EVENT_BUS.register(new CfEuropaChunkgen());
 	    MinecraftForge.EVENT_BUS.register(new CfOberonChunkgen());
-	    MinecraftForge.EVENT_BUS.register(new CfCallistoBiomeAddon());
+	    
+	    MinecraftForge.EVENT_BUS.register(new CFWorldGenRegistry());
+	    //MinecraftForge.EVENT_BUS.register(new CfCallistoBiomeAddon());
 	    //GameRegistry.registerWorldGenerator(new WorldGenEuropaIce(), 2000); // Higher weight runs later
-	    //System.out.println("[Fracture] Generator Registered successfully!");
+	    //System.out.println("[Fracture] Generators Registered");
 	    //System.out.println("--------------------------------------------------");
 	    // --- DEBUG END ---
 	    
@@ -138,9 +157,8 @@ public class CFMain {
 		
 		//MOVEMENT SYSTEM TESTING
 		MinecraftForge.EVENT_BUS.register(new PlayerMovementHandler());
+		MinecraftForge.EVENT_BUS.register(new CameraShakeHandler());
 		
-		
-		//MOVEMENT SYSTEM TESTING
 		 NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel(Reference.MODID);
 
 	        // Register packet: id=0, handler class, message class, side
@@ -156,36 +174,69 @@ public class CFMain {
 	     // existing DivePacket registration (id 0)
 	     NETWORK.registerMessage(DivePacket.Handler.class, DivePacket.class, 0, Side.SERVER);
 
-	     // NEW: register SlideCancelPacket (id 1) (not working)
+	     //  register SlideCancelPacket (id 1) (not working)
 	     NETWORK.registerMessage(SlideCancelPacket.Handler.class, SlideCancelPacket.class, 1, Side.SERVER);
 		
+	     // register screen shake (id 2-3)
+	     NETWORK.registerMessage(PacketScreenShake.Handler.class, PacketScreenShake.class, 2, Side.CLIENT);
+	     NETWORK.registerMessage(PacketContinuousShake.Handler.class, PacketContinuousShake.class, 3, Side.CLIENT);
 	     
-	     
-	     //..
+	    // NETWORK.registerMessage(PacketSyncTimer.Handler.class, PacketSyncTimer.class, 4, Side.CLIENT);
 		
+	     NETWORK.registerMessage(PacketSpawnExplosionParticles.Handler.class, PacketSpawnExplosionParticles.class, 5, Side.CLIENT);
+	     
+	     fracture.mod.network.NetworkHandler.init();
+	     //NETWORK.registerMessage(fracture.mod.network.PacketBombardment.Handler.class, fracture.mod.network.PacketBombardment.class,  6, Side.CLIENT);
+	     
 	}
 
 	@EventHandler
 	public void init(FMLInitializationEvent event) {
 
+		if (event.getSide().isClient()) {
+	        MinecraftForge.EVENT_BUS.register(new GalaxyMapEventHandler());
+
+	        MinecraftForge.EVENT_BUS.register(new fracture.mod.client.sky.CFSkyProviderRegistry());
+		}
+		
+		fracture.mod.events.FoliageColorTweaker.register();
+
+	
+	
 		// new AddonSolarSystems();
 		// new AddonPlanets();
 		// new AddonDimensions();
 
-        //proxy.init();
-        MinecraftForge.EVENT_BUS.register(new fracture.mod.util.handlers.CommonEventHandler());            
+		//micdoodle8.mods.galacticraft.api.GalacticraftRegistry.registerDimension("PlanetHollows", "_hollows", CFConfig.AddonDimensions.hollowsID, WorldProviderHollows.class, false);
+	    //micdoodle8.mods.galacticraft.api.GalacticraftRegistry.registerDimension("PlanetFracture", "_fracture", CFConfig.AddonDimensions.fractureID, WorldProviderTheFracture.class, false);
+	    //micdoodle8.mods.galacticraft.api.GalacticraftRegistry.registerDimension("PlanetDreamyard", "_dreamyard", CFConfig.AddonDimensions.dreamyardID, WorldProviderDreamyard.class, false);
+		//micdoodle8.mods.galacticraft.api.GalacticraftRegistry.registerDimension("CF.hollows", "addon.hollowsdim", CFConfig.AddonDimensions.hollowsID, WorldProviderHollows.class, false);
+	    //CFdimensions.hollowsDIM = micdoodle8.mods.galacticraft.core.util.WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.hollowsID);
 
-		//MOVEMENT SYSTEM TESTING
+	    //micdoodle8.mods.galacticraft.api.GalacticraftRegistry.registerDimension("CF.fracture", "addon.fracturedim", CFConfig.AddonDimensions.fractureID, WorldProviderTheFracture.class, false);
+	    //CFdimensions.fractureDIM = micdoodle8.mods.galacticraft.core.util.WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.fractureID);
+
+	    //micdoodle8.mods.galacticraft.api.GalacticraftRegistry.registerDimension("CF.dreamyard", "addon.dreamyarddim", CFConfig.AddonDimensions.dreamyardID, WorldProviderDreamyard.class, false);
+	    //CFdimensions.dreamyardDIM = micdoodle8.mods.galacticraft.core.util.WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.dreamyardID);
+
+	    new CFsolarsystems();
+	    new CFplanets();
+		
+		
+        //proxy.init();
+        MinecraftForge.EVENT_BUS.register(new CommonEventHandler());            
+
+		//MOVEMENT SYSTEM TESTING 5/21/26: commented out
         // register keybinds client-side only
-        if (event.getSide().isClient()) {
-            KeybindHandler.register();   
-        }
+//        if (event.getSide().isClient()) {
+//            KeybindHandler.register();   
+//        }
 		
 		
-        	//this has to do with the dash HUD icon (not working)
-            if (event.getSide().isClient()) {
-                MinecraftForge.EVENT_BUS.register(new fracture.mod.util.handlers.HudOverlayHandler());
-            }
+        	//this has to do with the dash HUD icon (not working)5/21/26: commented out
+//            if (event.getSide().isClient()) {
+//                MinecraftForge.EVENT_BUS.register(new fracture.mod.util.handlers.HudOverlayHandler());
+//            }
             
           //TESTING 1/3/26
             //fracture.mod.util.handlers.DiveHandler.register();
@@ -193,11 +244,13 @@ public class CFMain {
             //TESTING 9/21/25
             if (event.getSide().isClient()) {
                 KeybindHandler.register();   
-                MinecraftForge.EVENT_BUS.register(new fracture.mod.util.handlers.HudOverlayHandler());
+                
+                
+                MinecraftForge.EVENT_BUS.register(new HudOverlayHandler());
                 // client-side slide visuals(not working)
-                MinecraftForge.EVENT_BUS.register(new fracture.mod.util.handlers.SlideClientHandler());
+                MinecraftForge.EVENT_BUS.register(new SlideClientHandler());
             }
-            MinecraftForge.EVENT_BUS.register(new fracture.mod.world.epchanges.GanymedeInjector());
+            //MinecraftForge.EVENT_BUS.register(new GanymedeInjector());
 		//...
             // Replacer test
             //MinecraftForge.EVENT_BUS.register(new IoTerrainDecorator());
@@ -210,15 +263,16 @@ public class CFMain {
             micdoodle8.mods.galacticraft.api.galaxies.CelestialBody callisto = 
                 micdoodle8.mods.galacticraft.api.galaxies.GalaxyRegistry.getRegisteredMoons().get("callisto");
 
-            // You can keep the callisto check if you intend to modify other CelestialBody properties later,
-            // but the biomesToAdapt array is no longer needed.
             if (callisto != null) {
-               // Future Callisto configuration can go here.
+               // Future Callisto configuration goes here
             }
             
-            GameRegistry.registerWorldGenerator(new CfCallistoStructureGen(), 100);
+            MinecraftForge.TERRAIN_GEN_BUS.register(new CfCallistoStructureGen());
+            MinecraftForge.TERRAIN_GEN_BUS.register(new CfCallistoPyramidGen());
+            
+            //GameRegistry.registerWorldGenerator(new CfCallistoStructureGen(), 100);
             //GameRegistry.registerWorldGenerator(new CfCallistoFaultGen(), 200);
-            GameRegistry.registerWorldGenerator(new CfCallistoPyramidGen(), 500);
+            //GameRegistry.registerWorldGenerator(new CfCallistoPyramidGen(), 500);
             MinecraftForge.EVENT_BUS.register(new FlowerSpawnHandler());
             // Register IO World Load Tweaker
             //MinecraftForge.EVENT_BUS.register(new IoWorldTweaker());
@@ -235,18 +289,29 @@ public class CFMain {
 	@EventHandler
 	public void postInit(FMLPostInitializationEvent event) {
 		// Register addon dimensions used by planets/moons/etc.. in postInit
-		GalacticraftRegistry.registerDimension("CF.hollows", "addon.hollowsdim", CFConfig.AddonDimensions.hollowsID,
-				WorldProviderHollows.class, false);
-		CFdimensions.hollowsDIM = WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.hollowsID);
+		//micdoodle8.mods.galacticraft.api.GalacticraftRegistry.registerDimension("PlanetHollows", "_hollows", CFConfig.AddonDimensions.hollowsID, WorldProviderHollows.class, false);
+	    //micdoodle8.mods.galacticraft.api.GalacticraftRegistry.registerDimension("PlanetFracture", "_fracture", CFConfig.AddonDimensions.fractureID, WorldProviderTheFracture.class, false);
+	    //micdoodle8.mods.galacticraft.api.GalacticraftRegistry.registerDimension("PlanetDreamyard", "_dreamyard", CFConfig.AddonDimensions.dreamyardID, WorldProviderDreamyard.class, false);
+		//CFdimensions.hollowsDIM = micdoodle8.mods.galacticraft.core.util.WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.hollowsID);
+	    //CFdimensions.fractureDIM = micdoodle8.mods.galacticraft.core.util.WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.fractureID);
+	    //CFdimensions.dreamyardDIM = micdoodle8.mods.galacticraft.core.util.WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.dreamyardID);
 
-		GalacticraftRegistry.registerDimension("CF.fracture", "addon.fracturedim", CFConfig.AddonDimensions.fractureID,
-				WorldProviderTheFracture.class, false);
-		CFdimensions.fractureDIM = WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.fractureID);
-
+		//GalacticraftRegistry.registerDimension("CF.kona", "addon.konadim", CFConfig.AddonDimensions.konaID,
+		//WorldProviderKona.class, false);
+		//CFdimensions.konaDIM = WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.konaID);
 		
-		GalacticraftRegistry.registerDimension("CF.dreamyard", "addon.dreamyarddim", CFConfig.AddonDimensions.dreamyardID,
-                WorldProviderDreamyard.class, false);
-        CFdimensions.dreamyardDIM = WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.dreamyardID);
+//		GalacticraftRegistry.registerDimension("CF.hollows", "addon.hollowsdim", CFConfig.AddonDimensions.hollowsID,
+//				WorldProviderHollows.class, false);
+//		CFdimensions.hollowsDIM = WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.hollowsID);
+//
+//		GalacticraftRegistry.registerDimension("CF.fracture", "addon.fracturedim", CFConfig.AddonDimensions.fractureID,
+//				WorldProviderTheFracture.class, false);
+//		CFdimensions.fractureDIM = WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.fractureID);
+//
+//		
+//		GalacticraftRegistry.registerDimension("CF.dreamyard", "addon.dreamyarddim", CFConfig.AddonDimensions.dreamyardID,
+//                WorldProviderDreamyard.class, false);
+//        CFdimensions.dreamyardDIM = WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.dreamyardID);
 		//CFdimensions.init();
         //fracture.mod.world.epchanges.IoBiomeTweaker.tweak();
         //MinecraftForge.EVENT_BUS.register(new fracture.mod.world.epchanges.IoTerrainEventHandler());        
@@ -310,7 +375,12 @@ public class CFMain {
 		// <WorldProviderPlanetTwoS1.class>);
 
 	}
-
+	@Mod.EventHandler
+	public void serverStarting(FMLServerStartingEvent event) {
+	    event.registerServerCommand(new CommandCF());
+	    //event.registerServerCommand(new CommandCFExplode());
+	    //event.registerServerCommand(new fracture.mod.commands.CommandEventTimer());
+	}
 	public static World getWorld() {
 		return proxy.getWorld();
 	}
