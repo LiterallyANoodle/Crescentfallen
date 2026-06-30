@@ -9,8 +9,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.WorldGenerator;
 import fracture.mod.init.BlockInit; 
 
- // Note: this is currently broken. fix later.
-
 public class AlphaRoseGenerator extends WorldGenerator {
 
     private final int minPerPatch;
@@ -33,29 +31,35 @@ public class AlphaRoseGenerator extends WorldGenerator {
         boolean placedAny = false;
 
         for (int i = 0; i < count; i++) {
-            int dx = rand.nextInt(5) - rand.nextInt(5); 
-            int dz = rand.nextInt(5) - rand.nextInt(5);
+            int dx = rand.nextInt(8) - rand.nextInt(8); 
+            int dz = rand.nextInt(8) - rand.nextInt(8);
             int x = pos.getX() + dx;
             int z = pos.getZ() + dz;
 
             int surfaceY = world.getHeight(x, z); 
-            BlockPos spawn = new BlockPos(x, surfaceY, z);
+            
+            for (int y = surfaceY; y > 0; y--) {
+                BlockPos spawn = new BlockPos(x, y, z);
+                BlockPos below = spawn.down();
 
-            BlockPos below = spawn.down();
+                if (!world.isAirBlock(spawn)) continue;
 
-            if (!world.isAirBlock(spawn)) continue;
+                IBlockState belowState = world.getBlockState(below);
+                boolean soilOk = belowState.getBlock() == Blocks.GRASS ||
+                                 belowState.getBlock() == Blocks.DIRT ||
+                                 belowState.getBlock() == Blocks.MYCELIUM;
 
-            IBlockState belowState = world.getBlockState(below);
-            boolean soilOk = belowState.getBlock() == Blocks.GRASS ||
-                             belowState.getBlock() == Blocks.DIRT ||
-                             belowState.getBlock() == Blocks.MYCELIUM;
+                if (soilOk) {
+                    int light = world.getLight(spawn);
+                    boolean darkEnough = light <= 15; 
 
-            int light = world.getLight(spawn);
-            boolean darkEnough = light <= 15;
-
-            if (soilOk && darkEnough) {
-                world.setBlockState(spawn, BlockInit.ALPHA_ROSE.getDefaultState(), 2);
-                placedAny = true;
+                    if (darkEnough) {
+                        world.setBlockState(spawn, BlockInit.ALPHA_ROSE.getDefaultState(), 2);
+                        placedAny = true;
+                    }
+                    
+                    break; 
+                }
             }
         }
 

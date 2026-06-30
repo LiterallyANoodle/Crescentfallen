@@ -58,8 +58,8 @@ public class HudOverlayHandler {
             mc.fontRenderer.drawStringWithShadow(speedText, (screenWidth - textWidth) / 2, screenHeight - 60, 0xFFFFFF);
         }
         
-        int dashX = screenWidth / 2 + 1;
-        int dashY = screenHeight - 36;
+        int dashX = (screenWidth - 16) / 2;
+        int dashY = screenHeight - 42;
 
         if (cooldown > 0) {
             //DRAW ICON

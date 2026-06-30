@@ -1,0 +1,8 @@
+{
+    "parent": "block/cube_bottom_top",
+    "textures": {
+        "bottom": "fracture:blocks/surface_kona", 
+        "top": "fracture:blocks/surface_kona_trashy_top",
+        "side": "fracture:blocks/surface_kona_trashy_side"
+    }
+}

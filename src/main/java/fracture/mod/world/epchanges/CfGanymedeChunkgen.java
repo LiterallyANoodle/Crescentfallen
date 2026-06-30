@@ -151,7 +151,6 @@ public class CfGanymedeChunkgen implements IChunkGenerator {
     private double[] getHeights(double[] noiseArray, int xOffset, int yOffset, int zOffset, int xSize, int ySize, int zSize) {
         if (noiseArray == null) noiseArray = new double[xSize * ySize * zSize];
 
-        // Higher coordinate scale = noisier/tighter in X/Z
         double coordinateScale = 400.0D; // Increased from 300
         double heightScale = 300.0D;      
         
@@ -169,7 +168,6 @@ public class CfGanymedeChunkgen implements IChunkGenerator {
                 double warp = this.spikeWarpNoise.getValue(realX * 0.05, realZ * 0.05) * 4.0;
                 double spikeVal = this.spikeNoise.getValue(realX * 0.02 + warp, realZ * 0.02 + warp);
                 
-                // Lower threshold = More spikes (from 0.65 to 0.62)
                 boolean isSpike = spikeVal > 0.62;
                 
                 for (int k = 0; k < ySize; ++k) {
@@ -184,15 +182,13 @@ public class CfGanymedeChunkgen implements IChunkGenerator {
 
                     double yReal = (double) k * 8.0D;
                     
-                    // Force Solid Bottom
                     if (yReal < 2) {
                         density += 20.0D; 
                     }
 
-                    // Surface & Spikes
                     double surfaceHeight = 85.0D;
                     if (isSpike) {
-                        double spikeHeight = (spikeVal - 0.62) * 320.0; // Slightly taller spikes
+                        double spikeHeight = (spikeVal - 0.62) * 320.0; 
                         surfaceHeight += spikeHeight;
                     }
 
@@ -215,11 +211,9 @@ public class CfGanymedeChunkgen implements IChunkGenerator {
                         }
                     }
 
-                    // Cuts off generation at Y=230
                     if (yReal > 230) {
                         density = -1000.0D;
                     } else if (yReal > 200) {
-                        // Smooth transition
                         density -= (yReal - 200) * 3.5D;
                     }
 

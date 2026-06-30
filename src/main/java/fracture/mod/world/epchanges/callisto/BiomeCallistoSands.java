@@ -6,6 +6,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
+// Note: may be broken
+
 public class BiomeCallistoSands extends Biome {
     public BiomeCallistoSands() {
         super(new BiomeProperties("Callisto Sands")

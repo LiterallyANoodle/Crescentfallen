@@ -1,0 +1,9 @@
+{
+  "cfexplode": {
+    "category": "blocks",
+    "subtitle": "fracture.subtitle.cfexplode",
+    "sounds": [
+      "fracture:cfexplode"
+    ]
+  }
+}

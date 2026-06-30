@@ -4,6 +4,7 @@ import fracture.mod.CFConfig;
 import fracture.mod.CFInfo;
 import fracture.mod.planets.WorldProviderDreamyard;
 import fracture.mod.planets.WorldProviderHollows;
+import fracture.mod.planets.WorldProviderKona;
 import fracture.mod.planets.WorldProviderTheFracture;
 import fracture.mod.planets.dreamyard.biome.DreamyardBiomes;
 import fracture.mod.planets.hollows.hollows.biome.HollowsBiomes;
@@ -115,19 +116,20 @@ public class CFplanets {
 
 		//DimensionManager.registerDimension(CFConfig.AddonDimensions.fractureID, CFdimensions.fractureDIM);
 
-		//"Kona" Moon of Fracture, currently unreachable
+		//"Kona" Moon of Fracture, currently work in progress
 		
-		kona = new Moon("kona").setParentPlanet(fracture);
-		kona.setUnreachable();
-		kona.setRingColorRGB(0.1F, 0.9F, 0.6F);
-		kona.setPhaseShift(10.8748F);
-		kona.setRelativeDistanceFromCenter(new CelestialBody.ScalableDistance(11.9F, 11.9F));
-		//the higher you set the orbit time, the slower it will go.
-		kona.setRelativeOrbitTime(11.2F);
+		kona = new Moon("kona").setParentPlanet(fracture); 
+		kona.setTierRequired(CFConfig.CF_planet_settings.konaTier);
+		kona.setPhaseShift(0.0F);
+		kona.setRelativeDistanceFromCenter(new CelestialBody.ScalableDistance(9F, 9F));
+		kona.setRelativeOrbitTime(1 / 0.05F);
+		kona.setRelativeSize(0.2667F);
 		kona.setBodyIcon(new ResourceLocation(CFInfo.ID, "textures/gui/celestialbodies/kona.png"));
-		GalaxyRegistry.registerMoon(kona);
-		
-		
+		kona.atmosphereComponent(EnumAtmosphericGas.METHANE);
+		kona.setDimensionInfo(CFConfig.AddonDimensions.konaID, WorldProviderKona.class);
+		kona.addChecklistKeys("space_suit", "equip_oxygen_suit", "equip_parachute");
+
+
 		//"Dreamyard" register here
         //DimensionManager.registerDimension(CFConfig.AddonDimensions.dreamyardID, WorldProviderDreamyard.DIM_TYPE); // Make sure DIM_TYPE is declared in WorldProvider
 
@@ -173,7 +175,9 @@ public class CFplanets {
 		GalacticraftRegistry.registerTeleportType(WorldProviderHollows.class, new TeleportTypeCF());
 		GalacticraftRegistry.registerTeleportType(WorldProviderTheFracture.class, new TeleportTypeCF());
 		GalacticraftRegistry.registerTeleportType(WorldProviderDreamyard.class, new TeleportTypeCF());
+		GalacticraftRegistry.registerTeleportType(WorldProviderKona.class, new TeleportTypeCF());
 
+		
 	}
 
 	private void registerPlanets() {

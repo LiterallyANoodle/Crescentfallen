@@ -51,7 +51,7 @@ public class BlockInit {
 	//kona
 	public static final Block STONE_KONA = new SpaceStone("stone_kona", Material.ROCK);
 	public static final Block STONE_SUBSURFACE_KONA = new SpaceStone("stone_subsurface_kona", Material.ROCK);
-	public static final Block SURFACE_KONA = new SpaceStone("surface_kona", Material.ROCK);
+	public static final Block SURFACE_KONA = new SpaceStonekonasurface("surface_kona", Material.ROCK);
 	public static final Block COBBLESTONE_KONA = new SpaceStone("cobblestone_kona", Material.ROCK);
 	public static final Block STONEBRICK_KONA = new SpaceStone("stonebrick_kona", Material.ROCK);
 

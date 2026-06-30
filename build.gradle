@@ -18,7 +18,7 @@ apply plugin: 'java'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
 version = "1.0"
-group = "com.yourname.modid" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+group = "com.yourname.modid" // http://maven.apache.org/guides/mini/guide-naming-conventions.html (remember to change this)
 archivesBaseName = "modid"
 
 sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
@@ -52,10 +52,10 @@ repositories {
    
     maven { url "https://minecraft.curseforge.com/api/maven" }
 
-	// maven {
-    // 		name = "LocalRepo"
-    // 		url "file://${project.projectDir}/local_repo"
-	// 	  }
+//	 maven {
+//     		name = "LocalRepo"
+//    		url "file://${project.projectDir}/local_repo"
+//	 	  }
 
     //mavenCentral()
    //jcenter()
@@ -145,4 +145,11 @@ processResources {
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'
     }
+    configurations.all {
+    resolutionStrategy {
+        // Force the specific legacy Guava version Minecraft 1.12.2 / Forge expects
+        force 'com.google.guava:guava:21.0'
+    }
 }
+}
+

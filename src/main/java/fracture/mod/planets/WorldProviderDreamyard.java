@@ -30,7 +30,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class WorldProviderDreamyard extends WorldProviderSpace implements IGalacticraftWorldProvider, ISolarLevel {
 
-	public static final DimensionType DIM_TYPE = DimensionType.register("Dreamyard", "_dreamyard",CFConfig.AddonDimensions.dreamyardID, WorldProviderDreamyard.class, false);
+	//public static final DimensionType DIM_TYPE = DimensionType.register("Dreamyard", "_dreamyard",CFConfig.AddonDimensions.dreamyardID, WorldProviderDreamyard.class, false);
 
 	
     @Override
@@ -183,7 +183,7 @@ public class WorldProviderDreamyard extends WorldProviderSpace implements IGalac
 
     @Override
     public DimensionType getDimensionType() {
-        return CFdimensions.dreamyardDIM;
+        return micdoodle8.mods.galacticraft.core.util.WorldUtil.getDimensionTypeById(CFConfig.AddonDimensions.dreamyardID);
     }
 
     @Override

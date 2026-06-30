@@ -193,83 +193,78 @@ public class SkyProviderdreamyard extends IRenderHandler {
                 GlStateManager.popMatrix();
             }
             
-            // --- SHOOTING STARS ---
+         // --- SHOOTING STARS ---
             this.updateAndRenderShootingStars(tessellator1, worldRenderer1, deltaTime);
 
             // --- SUN RENDERING ---
             GlStateManager.pushMatrix();
             try {
+                // BUG FIX: The shooting stars method disabled blend. We MUST re-enable it!
+                GlStateManager.enableBlend();
+                GlStateManager.disableTexture2D();
+                GlStateManager.shadeModel(GL11.GL_SMOOTH);
+                
+                // Position the sun in the sky (Stationary concept)
                 GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);
                 GlStateManager.rotate(60.0F, 1.0F, 0.0F, 0.0F); 
 
-                afloat[0] = 255 / 255.0F;
-                afloat[1] = 194 / 255.0F;
-                afloat[2] = 180 / 255.0F;
-                afloat[3] = 0.3F;
-                float f6 = afloat[0];
-                float f7 = afloat[1];
-                float f8 = afloat[2];
+                float r = 255 / 255.0F;
+                float g = 194 / 255.0F;
+                float b = 180 / 255.0F;
+                float auraAlpha = 0.4F; 
 
-                // --- FIX: USE ADDITIVE BLENDING FOR AURA ---
+                // Additive Blending for a smooth, glowing aura
                 GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
                 
-                // Sun Aura Fans
-                // Lower alpha slightly for additive blend so it isn't blindingly white
-                float auraAlpha = 0.4F; 
-                
+                // --- Sun Aura Fan 1 (Inner Glow) ---
+                double f10 = 20.0D;
                 worldRenderer1.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-                // Center color
-                worldRenderer1.pos(0.0D, 100.0D, 0.0D).color(f6, f7, f8, auraAlpha).endVertex();
+                worldRenderer1.pos(0.0D, 100.0D, 0.0D).color(r, g, b, auraAlpha).endVertex(); // Center color
                 
-                // Outer color (fade to transparent)
-                float r = afloat[0]; float g = afloat[1]; float b = afloat[2]; float a = 0.0F;
-                float f10 = 20.0F;
-                
-                // Fan 1
-                worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(0, 100.0D, (double) -f10 * 1.5F).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-                worldRenderer1.pos((double) f10 * 1.5F, 100.0D, 0).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(f10, 100.0D, f10).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(0, 100.0D, (double) f10 * 1.5F).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(-f10, 100.0D, f10).color(r, g, b, a).endVertex();
-                worldRenderer1.pos((double) -f10 * 1.5F, 100.0D, 0).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, a).endVertex();
+                // Outer ring (fades cleanly to 0 opacity now that blending is fixed)
+                worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(0.0D, 100.0D, -f10 * 1.5D).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(f10, 100.0D, -f10).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(f10 * 1.5D, 100.0D, 0.0D).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(f10, 100.0D, f10).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(0.0D, 100.0D, f10 * 1.5D).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(-f10, 100.0D, f10).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(-f10 * 1.5D, 100.0D, 0.0D).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, 0.0F).endVertex(); // Closes the fan
                 tessellator1.draw();
                 
-                // Fan 2 (Larger outer glow)
+                // --- Sun Aura Fan 2 (Outer Glow) ---
+                f10 = 40.0D;
                 worldRenderer1.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-                worldRenderer1.pos(0.0D, 100.0D, 0.0D).color(f6, f7, f8, auraAlpha * 0.5F).endVertex();
+                worldRenderer1.pos(0.0D, 100.0D, 0.0D).color(r, g, b, auraAlpha * 0.5F).endVertex();
                 
-                r = afloat[0]; g = afloat[1]; b = afloat[2]; a = 0.0F;
-                f10 = 40.0F;
-                worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(0, 100.0D, (double) -f10 * 1.5F).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(f10, 100.0D, -f10).color(r, g, b, a).endVertex();
-                worldRenderer1.pos((double) f10 * 1.5F, 100.0D, 0).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(f10, 100.0D, f10).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(0, 100.0D, (double) f10 * 1.5F).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(-f10, 100.0D, f10).color(r, g, b, a).endVertex();
-                worldRenderer1.pos((double) -f10 * 1.5F, 100.0D, 0).color(r, g, b, a).endVertex();
-                worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, a).endVertex();
+                worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(0.0D, 100.0D, -f10 * 1.5D).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(f10, 100.0D, -f10).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(f10 * 1.5D, 100.0D, 0.0D).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(f10, 100.0D, f10).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(0.0D, 100.0D, f10 * 1.5D).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(-f10, 100.0D, f10).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(-f10 * 1.5D, 100.0D, 0.0D).color(r, g, b, 0.0F).endVertex();
+                worldRenderer1.pos(-f10, 100.0D, -f10).color(r, g, b, 0.0F).endVertex();
                 tessellator1.draw();
 
-                // --- RESET BLEND FUNC FOR TEXTURE ---
+                // --- TEXTURE RESET ---
+                // Reset to standard alpha blending for the core texture so it doesn't wash out
                 GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-
-                // Sun Texture Body
                 GlStateManager.shadeModel(GL11.GL_FLAT);
                 GlStateManager.enableTexture2D();
                 
-                // Texture quad
+                // --- Sun Texture Body ---
                 GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-                f10 = this.sunSize;
+                double coreSize = (double) this.sunSize;
                 mc.renderEngine.bindTexture(SkyProviderdreamyard.sunTexture);
+                
                 worldRenderer1.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-                worldRenderer1.pos(-f10, 100.0D, -f10).tex(0.0D, 0.0D).endVertex();
-                worldRenderer1.pos(f10, 100.0D, -f10).tex(1.0D, 0.0D).endVertex();
-                worldRenderer1.pos(f10, 100.0D, f10).tex(1.0D, 1.0D).endVertex();
-                worldRenderer1.pos(-f10, 100.0D, f10).tex(0.0D, 1.0D).endVertex();
+                worldRenderer1.pos(-coreSize, 100.0D, -coreSize).tex(0.0D, 0.0D).endVertex();
+                worldRenderer1.pos(coreSize, 100.0D, -coreSize).tex(1.0D, 0.0D).endVertex();
+                worldRenderer1.pos(coreSize, 100.0D, coreSize).tex(1.0D, 1.0D).endVertex();
+                worldRenderer1.pos(-coreSize, 100.0D, coreSize).tex(0.0D, 1.0D).endVertex();
                 tessellator1.draw();
 
             } finally {
