@@ -104,7 +104,7 @@ public class JsonClassGenerator extends AbstractProcessor {
 			}
 			
 			// generatedClassName validation
-			if (null == generatedClassName || "".equals(generatedClassName)) {
+			if ("".equals(generatedClassName)) {
 				messager.printMessage(
 						Diagnostic.Kind.ERROR, 
 						"@GeneratorTarget requires generatedClassName to be defined", 
