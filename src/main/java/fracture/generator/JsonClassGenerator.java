@@ -1,4 +1,4 @@
-package fracture.mod.generator;
+package fracture.generator;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -13,7 +13,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -26,9 +25,9 @@ import javax.tools.Diagnostic;
 
 import com.google.auto.service.AutoService;
 
-import fracture.mod.annotation.GeneratorTarget;
-import fracture.mod.annotation.Literal;
-import fracture.mod.annotation.Template;
+import fracture.annotation.GeneratorTarget;
+import fracture.annotation.Literal;
+import fracture.annotation.Template;
 
 @AutoService(Processor.class)
 public class JsonClassGenerator extends AbstractProcessor {

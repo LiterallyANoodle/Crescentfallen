@@ -1,4 +1,4 @@
-package fracture.mod.generator.template;
+package fracture.generator.template;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,9 +8,9 @@ import javax.lang.model.element.Modifier;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.squareup.javapoet.FieldSpec;
 
-import fracture.mod.annotation.GeneratorTarget;
-import fracture.mod.annotation.Literal;
-import fracture.mod.annotation.Template;
+import fracture.annotation.GeneratorTarget;
+import fracture.annotation.Literal;
+import fracture.annotation.Template;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 
