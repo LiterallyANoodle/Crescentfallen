@@ -13,6 +13,7 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'net.ltgt.apt'
+apply plugin: 'net.ltgt.apt-eclipse'
 apply plugin: 'java'
 //apply plugin: 'net.galacticraft.addon'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
@@ -60,6 +61,22 @@ repositories {
     //mavenCentral()
    //jcenter()
 }
+
+sourceSets {
+    processor {
+        java {
+            srcDirs = ['src/processor/java']
+        }
+    }
+    main {
+        // Keeps your normal mod code separated
+        java { srcDirs = ['src/main/java'] }
+        resources { srcDirs = ['src/main/resources'] }
+        // Let your main mod code use the annotations compiled by the processor source set
+        compileClasspath += sourceSets.processor.output
+    }
+}
+
 dependencies {
 
     //deobfCompile "dev.galacticraft:galacticraft-legacy:4.0.7"
@@ -117,7 +134,7 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
     
-    apt 'com.google.auto.service:auto-service:1.1.1'
+    annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
     compileOnly 'com.google.auto.service:auto-service:1.1.1'
     implementation 'com.squareup:javapoet:1.13.0'
     
@@ -125,6 +142,17 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    
+    // Dependencies specifically for compiling the PROCESSOR source set itself
+    processorCompile 'com.google.auto.service:auto-service:1.1.1'
+    processorApt 'com.google.auto.service:auto-service:1.1.1'
+    processorCompile 'com.squareup:javapoet:1.13.0'
+    processorCompile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+	
+	// Self-referencing hack specifically for the Eclipse IDE task.
+    // It tells Eclipse to load your compiled bin folder as a processor,
+    // but relies on a lazy provider to keep Gradle's task graph clean!
+    implementation sourceSets.processor.output
 
 }
 
@@ -146,10 +174,60 @@ processResources {
         exclude 'mcmod.info'
     }
     configurations.all {
-    resolutionStrategy {
-        // Force the specific legacy Guava version Minecraft 1.12.2 / Forge expects
-        force 'com.google.guava:guava:21.0'
-    }
-}
+    	resolutionStrategy {
+        	// Force the specific legacy Guava version Minecraft 1.12.2 / Forge expects
+        	force 'com.google.guava:guava:21.0'
+    	}
+	}
 }
 
+// 1. Define a task that packages your processor .class files into a JAR
+task processorJar(type: Jar) {
+    archiveName = "internal-processor.jar"
+    destinationDir = file("${buildDir}/processor-jar")
+    from sourceSets.processor.output
+}
+
+compileJava.dependsOn processorJar
+
+configurations {
+    apt
+}
+
+dependencies {
+    apt files("${buildDir}/processor-jar/internal-processor.jar")
+}
+
+compileJava {
+    options.annotationProcessorPath = configurations.apt
+}
+
+// 2. Ensure Eclipse generation waits for the JAR to be created
+tasks.findByName('eclipse')?.dependsOn(processorJar)
+tasks.findByName('eclipseFactorypath')?.dependsOn(processorJar)
+
+eclipse {
+    classpath {
+        plusConfigurations += [configurations.processorCompile]
+    }
+
+    // Directly writes the generated JAR path straight into Eclipse's configuration
+    factorypath {
+        file {
+            withXml { xmlProvider ->
+                def root = xmlProvider.asNode()
+                root.setValue([]) // Clear old broken entries
+                
+                // Point directly to the newly built internal-processor.jar
+                def jarPath = new File(project.buildDir, "processor-jar/internal-processor.jar").absolutePath
+                
+                root.appendNode('factorypathentry', [
+                    kind: 'EXTJAR',
+                    id: jarPath,
+                    enabled: 'true',
+                    runInBatchMode: 'false'
+                ])
+            }
+        }
+    }
+}

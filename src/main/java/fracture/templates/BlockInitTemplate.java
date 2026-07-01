@@ -1,4 +1,4 @@
-package fracture.generator.template;
+package fracture.templates;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,13 +8,13 @@ import javax.lang.model.element.Modifier;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.squareup.javapoet.FieldSpec;
 
-import fracture.annotation.GeneratorTarget;
-import fracture.annotation.Literal;
-import fracture.annotation.Template;
+import generator.annotation.GeneratorTarget;
+import generator.annotation.Literal;
+import generator.annotation.Template;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 
-@GeneratorTarget(packageLocation="fracture.mod.init", generatedClassName="BlockInit")
+@GeneratorTarget(packageLocation="fracture.mod.init", generatedClassName="")
 public class BlockInitTemplate {
 	
 	@Literal

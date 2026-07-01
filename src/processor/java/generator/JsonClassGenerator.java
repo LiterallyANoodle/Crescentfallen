@@ -1,4 +1,4 @@
-package fracture.generator;
+package generator;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -25,9 +25,9 @@ import javax.tools.Diagnostic;
 
 import com.google.auto.service.AutoService;
 
-import fracture.annotation.GeneratorTarget;
-import fracture.annotation.Literal;
-import fracture.annotation.Template;
+import generator.annotation.GeneratorTarget;
+import generator.annotation.Literal;
+import generator.annotation.Template;
 
 @AutoService(Processor.class)
 public class JsonClassGenerator extends AbstractProcessor {
@@ -202,7 +202,7 @@ public class JsonClassGenerator extends AbstractProcessor {
 			
 		}
 		
-		return true;
+		return !annotations.isEmpty();
 	}
 	
 	private boolean isValidJavaIdentifier(String name) {

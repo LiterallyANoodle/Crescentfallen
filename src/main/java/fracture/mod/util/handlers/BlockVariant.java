@@ -1,6 +1,5 @@
 package fracture.mod.util.handlers;
 
-import fracture.mod.annotation.GeneratorTarget;
 import net.minecraft.util.IStringSerializable;
 
 public class BlockVariant {
